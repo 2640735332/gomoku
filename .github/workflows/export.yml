@@ -1,0 +1,182 @@
+name: Export Gomoku
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.3
+  EXPORT_NAME: gomoku
+  BRANCH_NAME: ${{ github.ref_name }}
+
+jobs:
+  ###########################################################################
+  # TESTS — run on all pushes
+  ###########################################################################
+  test:
+    name: Tests
+    runs-on: ubuntu-24.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup
+        run: |
+          echo "Branch: ${BRANCH_NAME}"
+          git config --global --add safe.directory /__w/gomoku/gomoku
+          mkdir -v -p $HOME/.config/godot
+          mkdir -v -p $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          cp -rv /root/.config/godot/* $HOME/.config/godot/ 2>/dev/null || true
+          cp -rv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/* $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/ 2>/dev/null || true
+
+      - name: Run Tests
+        run: |
+          godot --headless test/run_tests.tscn
+
+  ###########################################################################
+  # WEB EXPORT
+  ###########################################################################
+  export-web:
+    name: Web Export
+    needs: [test]
+    runs-on: ubuntu-24.04
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup
+        run: |
+          mkdir -v -p $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          cp -rv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/web* $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/ 2>/dev/null || true
+
+      - name: Web Build
+        run: |
+          mkdir -v -p build/web
+          godot --headless --export-release "Web" "build/web/index.html"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-export-${{ github.ref_name }}
+          path: build/web
+
+  ###########################################################################
+  # DEPLOY — main branch only
+  ###########################################################################
+  deploy:
+    name: Deploy to Production
+    needs: [export-web]
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-24.04
+    env:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-export-main
+          path: build/web
+
+      - name: Verify Web Export
+        run: |
+          echo "📦 Production build files:"
+          ls -lh build/web/
+          MISSING=""
+          for f in index.html index.wasm index.js index.pck; do
+            if [ -f "build/web/$f" ]; then echo "✅ $f"
+            else echo "❌ $f MISSING"; MISSING="$MISSING $f"; fi
+          done
+          [ -n "$MISSING" ] && echo "❌ Missing:$MISSING" && exit 1
+          grep -q 'Godot\|canvas\|Engine' build/web/index.html && echo "✅ index.html valid"
+
+      - name: Deploy via rsync
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          DEPLOY_IP="${DEPLOY_HOST#*@}"
+          ssh-keyscan -H "$DEPLOY_IP" >> ~/.ssh/known_hosts 2>/dev/null
+          rsync -avz --delete build/web/ "$DEPLOY_HOST:website/games/$EXPORT_NAME/"
+          echo "✅ Deployed to production at $DEPLOY_HOST:website/games/$EXPORT_NAME/"
+
+  ###########################################################################
+  # NOTIFICATION
+  ###########################################################################
+  notify:
+    name: Notification
+    needs: [test, export-web, deploy]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Collect job statuses
+        id: status
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          COMMIT="${{ github.sha }}"
+          COMMIT_SHORT="${COMMIT:0:7}"
+          COMMIT_MSG="${{ github.event.head_commit.message || 'manual trigger' }}"
+          ACTOR="${{ github.actor }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          TEST="${{ needs.test.result }}"
+          WEB="${{ needs.export-web.result }}"
+          DEPLOY="${{ needs.deploy.result }}"
+
+          echo "test=${TEST}" >> $GITHUB_OUTPUT
+          echo "web=${WEB}" >> $GITHUB_OUTPUT
+          echo "deploy=${DEPLOY}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "commit=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          echo "msg=${COMMIT_MSG}" >> $GITHUB_OUTPUT
+          echo "actor=${ACTOR}" >> $GITHUB_OUTPUT
+          echo "url=${RUN_URL}" >> $GITHUB_OUTPUT
+
+      - name: Send Server酱 notification
+        env:
+          SCKEY: ${{ secrets.SCKEY }}
+        run: |
+          if [ -z "$SCKEY" ]; then
+            echo "⚠️ SCKEY not set — skipping notification"
+            exit 0
+          fi
+
+          BRANCH="${{ steps.status.outputs.branch }}"
+          COMMIT="${{ steps.status.outputs.commit }}"
+          ACTOR="${{ steps.status.outputs.actor }}"
+          URL="${{ steps.status.outputs.url }}"
+          TEST="${{ steps.status.outputs.test }}"
+          WEB="${{ steps.status.outputs.web }}"
+          DEPLOY="${{ steps.status.outputs.deploy }}"
+
+          if [ "$TEST" = "success" ] && [ "$WEB" != "failure" ] && [ "$DEPLOY" != "failure" ]; then
+            TITLE="✅ Gomoku CI Passed [$BRANCH]"
+          else
+            TITLE="❌ Gomoku CI Failed [$BRANCH]"
+          fi
+
+          {
+            echo "## Gomoku CI Report"
+            echo ""
+            echo "Branch: $BRANCH  |  Commit: $COMMIT  |  Author: $ACTOR"
+            echo "──────────────────────────────"
+            echo "🔬 Test: $TEST  |  🌐 Web: ${WEB:-skipped}"
+            echo "🚀 Deploy: ${DEPLOY:-skipped}"
+            echo "──────────────────────────────"
+            echo "🔗 ${URL}"
+          } > /tmp/ci_notify.txt
+          CONTENT=$(cat /tmp/ci_notify.txt)
+
+          echo "Sending Server酱 notification..."
+          curl -s -X POST "https://sctapi.ftqq.com/$SCKEY.send" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg title "$TITLE" --arg content "$CONTENT" '{title: $title, content: $content}')" \
+            2>&1 || echo "⚠️ Server酱 send failed (non-critical)"
+          echo ""
