@@ -8,11 +8,14 @@ on:
 env:
   GODOT_VERSION: 4.3
   EXPORT_NAME: gomoku
+  GODOT_ANDROID_KEYSTORE_RELEASE_PATH: /root/debug.keystore
+  GODOT_ANDROID_KEYSTORE_RELEASE_USER: androiddebugkey
+  GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: android
   BRANCH_NAME: ${{ github.ref_name }}
 
 jobs:
   ###########################################################################
-  # TESTS — run on all pushes
+  # TESTS
   ###########################################################################
   test:
     name: Tests
@@ -38,10 +41,10 @@ jobs:
           godot --headless test/run_tests.tscn
 
   ###########################################################################
-  # WEB EXPORT
+  # ANDROID EXPORT
   ###########################################################################
-  export-web:
-    name: Web Export
+  export-android:
+    name: Android Export
     needs: [test]
     runs-on: ubuntu-24.04
     container:
@@ -50,69 +53,55 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
+          fetch-depth: 0
 
       - name: Setup
         run: |
+          git config --global --add safe.directory /__w/gomoku/gomoku
+          VERSION_CODE=$(git rev-list --count HEAD)
+          echo "Version code: $VERSION_CODE"
+          sed -i "s/version/code=[0-9]*/version/code=$VERSION_CODE/" export_presets.cfg 2>/dev/null || true
+          mkdir -v -p $HOME/.config/godot
           mkdir -v -p $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          cp -rv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/web* $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/ 2>/dev/null || true
+          cp -rv /root/.config/godot/* $HOME/.config/godot/ 2>/dev/null || true
+          cp -rv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/* $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/ 2>/dev/null || true
+          mkdir -v -p $HOME/.local/share/godot/keystores
+          keytool -genkey -v -keystore $HOME/.local/share/godot/keystores/debug.keystore \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
+          sed -i "s|export/android/debug_keystore = \"/root/debug.keystore\"|export/android/debug_keystore = \"$HOME/.local/share/godot/keystores/debug.keystore\"|" $HOME/.config/godot/editor_settings-4.3.tres 2>/dev/null || true
 
-      - name: Web Build
+      - name: Android Build
         run: |
-          mkdir -v -p build/web
-          godot --headless --export-release "Web" "build/web/index.html"
+          mkdir -v -p build/android
+          EXPORT_DIR="$(readlink -f build)"
+          godot --headless --verbose --export-release "Android" "$EXPORT_DIR/android/$EXPORT_NAME.apk" 2>&1 | tail -20
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-export-${{ github.ref_name }}
-          path: build/web
+          name: android-apk-${{ github.ref_name }}
+          path: build/android
 
-  ###########################################################################
-  # DEPLOY — main branch only
-  ###########################################################################
-  deploy:
-    name: Deploy to Production
-    needs: [export-web]
-    if: github.ref_name == 'main'
-    runs-on: ubuntu-24.04
-    env:
-      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: web-export-main
-          path: build/web
-
-      - name: Verify Web Export
+      - name: Verify Android APK
         run: |
-          echo "📦 Production build files:"
-          ls -lh build/web/
-          MISSING=""
-          for f in index.html index.wasm index.js index.pck; do
-            if [ -f "build/web/$f" ]; then echo "✅ $f"
-            else echo "❌ $f MISSING"; MISSING="$MISSING $f"; fi
-          done
-          [ -n "$MISSING" ] && echo "❌ Missing:$MISSING" && exit 1
-          grep -q 'Godot\|canvas\|Engine' build/web/index.html && echo "✅ index.html valid"
-
-      - name: Deploy via rsync
-        run: |
-          set -e
-          mkdir -p ~/.ssh
-          echo "$DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          DEPLOY_IP="${DEPLOY_HOST#*@}"
-          ssh-keyscan -H "$DEPLOY_IP" >> ~/.ssh/known_hosts 2>/dev/null
-          rsync -avz --delete build/web/ "$DEPLOY_HOST:website/games/$EXPORT_NAME/"
-          echo "✅ Deployed to production at $DEPLOY_HOST:website/games/$EXPORT_NAME/"
+          echo "📦 Files in Android build:"
+          ls -lh build/android/
+          APK="build/android/$EXPORT_NAME.apk"
+          if [ -f "$APK" ]; then
+            SIZE=$(stat -c%s "$APK")
+            echo "✅ APK exists: $(ls -lh "$APK" | awk '{print $5}')"
+            [ "$SIZE" -gt 1000000 ] && echo "✅ APK size > 1MB" || echo "⚠️ Small APK ($SIZE bytes)"
+          else
+            echo "❌ APK not found!"; exit 1
+          fi
 
   ###########################################################################
   # NOTIFICATION
   ###########################################################################
   notify:
     name: Notification
-    needs: [test, export-web, deploy]
+    needs: [test, export-android]
     if: always()
     runs-on: ubuntu-24.04
     steps:
@@ -127,12 +116,10 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           TEST="${{ needs.test.result }}"
-          WEB="${{ needs.export-web.result }}"
-          DEPLOY="${{ needs.deploy.result }}"
+          ANDROID="${{ needs.export-android.result }}"
 
           echo "test=${TEST}" >> $GITHUB_OUTPUT
-          echo "web=${WEB}" >> $GITHUB_OUTPUT
-          echo "deploy=${DEPLOY}" >> $GITHUB_OUTPUT
+          echo "android=${ANDROID}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
           echo "commit=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
           echo "msg=${COMMIT_MSG}" >> $GITHUB_OUTPUT
@@ -153,10 +140,9 @@ jobs:
           ACTOR="${{ steps.status.outputs.actor }}"
           URL="${{ steps.status.outputs.url }}"
           TEST="${{ steps.status.outputs.test }}"
-          WEB="${{ steps.status.outputs.web }}"
-          DEPLOY="${{ steps.status.outputs.deploy }}"
+          ANDROID="${{ steps.status.outputs.android }}"
 
-          if [ "$TEST" = "success" ] && [ "$WEB" != "failure" ] && [ "$DEPLOY" != "failure" ]; then
+          if [ "$TEST" = "success" ] && [ "$ANDROID" != "failure" ]; then
             TITLE="✅ Gomoku CI Passed [$BRANCH]"
           else
             TITLE="❌ Gomoku CI Failed [$BRANCH]"
@@ -167,8 +153,7 @@ jobs:
             echo ""
             echo "Branch: $BRANCH  |  Commit: $COMMIT  |  Author: $ACTOR"
             echo "──────────────────────────────"
-            echo "🔬 Test: $TEST  |  🌐 Web: ${WEB:-skipped}"
-            echo "🚀 Deploy: ${DEPLOY:-skipped}"
+            echo "🔬 Test: $TEST  |  📱 Android: ${ANDROID:-skipped}"
             echo "──────────────────────────────"
             echo "🔗 ${URL}"
           } > /tmp/ci_notify.txt
