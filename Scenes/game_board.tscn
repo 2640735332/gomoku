@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://d6dkf6rrm7t7f"]
+
+[ext_resource type="Script" path="res://Scripts/game_board.gd" id="1_vy5di"]
+
+[node name="GameBoard" type="Control"]
+anchors_preset = 0
+offset_right = 570.0
+offset_bottom = 570.0
+mouse_filter = 1
+script = ExtResource("1_vy5di")

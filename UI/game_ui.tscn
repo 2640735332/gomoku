@@ -1,0 +1,198 @@
+[gd_scene load_steps=3 format=3 uid="uid://cgn3eeklym50b"]
+
+[ext_resource type="Script" path="res://UI/game_ui.gd" id="1_g3k0s"]
+
+[node name="GameUI" type="Control"]
+anchors_preset = 0
+offset_right = 600.0
+offset_bottom = 130.0
+mouse_filter = 1
+script = ExtResource("1_g3k0s")
+
+[node name="TopBar" type="Panel"]
+layout_mode = 0
+offset_right = 600.0
+offset_bottom = 56.0
+color = Color("#0f1011")
+
+[node name="TurnIndicator" type="Panel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 44.0
+offset_bottom = 44.0
+color = Color("#1a1a1a")
+
+[node name="CurrentTurnLabel" type="Label"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 52.0
+offset_top = 12.0
+offset_right = 260.0
+offset_bottom = 36.0
+theme_override_colors/font_color = Color("#f7f8f8")
+theme_override_constants/line_spacing = 0
+text = "Black's Turn"
+theme_override_font_sizes/font_size = 16
+
+[node name="MoveCountLabel" type="Label"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 52.0
+offset_top = 34.0
+offset_right = 260.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color("#62666d")
+text = "Move 1"
+theme_override_font_sizes/font_size = 11
+
+[node name="UndoContainer" type="Control"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 440.0
+offset_top = 6.0
+offset_right = 600.0
+offset_bottom = 56.0
+
+[node name="UndoButton" type="Button"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 0.0
+offset_top = 6.0
+offset_right = 72.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color("#d0d6e0")
+theme_override_colors/font_hover_color = Color("#f7f8f8")
+theme_override_colors/font_disabled_color = Color("#62666d")
+theme_override_colors/button_normal = Color("#08090a")
+theme_override_colors/button_hover = Color("#0f1011")
+theme_override_styles/normal = null
+theme_override_styles/hover = null
+theme_override_styles/pressed = null
+theme_override_styles/disabled = null
+theme_override_font_sizes/font_size = 12
+text = "↩ Undo"
+
+[node name="ResetButton" type="Button"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 80.0
+offset_top = 6.0
+offset_right = 152.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color("#d0d6e0")
+theme_override_colors/font_hover_color = Color("#f7f8f8")
+theme_override_font_sizes/font_size = 12
+text = "↻ Reset"
+
+[node name="Separator" type="HSeparator"]
+layout_mode = 0
+offset_top = 55.0
+offset_right = 600.0
+offset_bottom = 56.0
+
+[node name="StatusBar" type="Panel"]
+layout_mode = 0
+offset_top = 56.0
+offset_right = 600.0
+offset_bottom = 130.0
+color = Color("#08090a")
+
+[node name="StatusLabel" type="Label"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = 584.0
+offset_bottom = 30.0
+theme_override_colors/font_color = Color("#8a8f98")
+text = "Place your stone"
+theme_override_font_sizes/font_size = 12
+
+[node name="PlayerInfo" type="Control"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 34.0
+offset_right = 280.0
+offset_bottom = 66.0
+
+[node name="BlackDot" type="ColorRect"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 2.0
+offset_right = 14.0
+offset_bottom = 16.0
+color = Color("#1a1a1a")
+
+[node name="BlackLabel" type="Label"]
+layout_mode = 0
+offset_left = 22.0
+offset_top = 2.0
+offset_right = 120.0
+offset_bottom = 18.0
+theme_override_colors/font_color = Color("#62666d")
+text = "Player 1 (Black)"
+theme_override_font_sizes/font_size = 10
+
+[node name="WhiteDot" type="ColorRect"]
+layout_mode = 0
+offset_left = 130.0
+offset_top = 2.0
+offset_right = 144.0
+offset_bottom = 16.0
+color = Color("#e8e8e8")
+
+[node name="WhiteLabel" type="Label"]
+layout_mode = 0
+offset_left = 152.0
+offset_top = 2.0
+offset_right = 260.0
+offset_bottom = 18.0
+theme_override_colors/font_color = Color("#62666d")
+text = "Player 2 (White)"
+theme_override_font_sizes/font_size = 10
+
+[node name="VictoryPanel" type="Panel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 100.0
+offset_top = 12.0
+offset_right = 500.0
+offset_bottom = 110.0
+color = Color("#0f1011")
+
+[node name="VictoryLabel" type="Label"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 30.0
+offset_top = 16.0
+offset_right = 370.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color("#10b981")
+text = "Black Wins!"
+theme_override_font_sizes/font_size = 24
+
+[node name="VictorySubtitle" type="Label"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 30.0
+offset_top = 48.0
+offset_right = 370.0
+offset_bottom = 66.0
+theme_override_colors/font_color = Color("#8a8f98")
+text = "5 in a row detected"
+theme_override_font_sizes/font_size = 12
+
+[node name="PlayAgainButton" type="Button"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 30.0
+offset_top = 72.0
+offset_right = 160.0
+offset_bottom = 94.0
+theme_override_colors/font_color = Color("#f7f8f8")
+theme_override_colors/font_hover_color = Color("#ffffff")
+theme_override_font_sizes/font_size = 13
+text = "Play Again"

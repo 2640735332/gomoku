@@ -1,0 +1,49 @@
+[gd_scene load_steps=4 format=3 uid="uid://b0pbg4egbg4i6"]
+
+[ext_resource type="Script" path="res://Scripts/main.gd" id="1_3ghjb"]
+[ext_resource type="PackedScene" uid="uid://cgn3eeklym50b" path="res://UI/game_ui.tscn" id="2_hjol7"]
+[ext_resource type="PackedScene" uid="uid://d6dkf6rrm7t7f" path="res://Scenes/game_board.tscn" id="3_8y41h"]
+
+[node name="Main" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+mouse_filter = 2
+script = ExtResource("1_3ghjb")
+
+[node name="Background" type="ColorRect"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+color = Color("#08090a")
+
+[node name="Content" type="Control"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -350.0
+offset_right = 300.0
+offset_bottom = 350.0
+mouse_filter = 2
+
+[node name="GameUI" parent="Content" instance=ExtResource("2_hjol7")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 570.0
+
+[node name="GameBoard" parent="Content" instance=ExtResource("3_8y41h")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 15.0
+offset_top = 15.0
+offset_right = 585.0
+offset_bottom = 555.0
