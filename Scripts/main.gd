@@ -19,6 +19,7 @@ func _ready():
 		ui.game_state = game_state
 		ui.undo_pressed.connect(_on_undo)
 		ui.reset_pressed.connect(_on_reset)
+		ui.exit_pressed.connect(_on_exit)
 	
 	_refresh()
 
@@ -45,6 +46,9 @@ func _on_reset():
 	board.last_move = Vector2i(-1, -1)
 	board.hover_cell = Vector2i(-1, -1)
 	_refresh()
+
+func _on_exit():
+	get_tree().quit()
 
 func _refresh():
 	board.sync_state()

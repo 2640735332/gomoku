@@ -4,14 +4,14 @@
 
 [node name="GameUI" type="Control"]
 anchors_preset = 0
-offset_right = 600.0
+offset_right = 700.0
 offset_bottom = 130.0
 mouse_filter = 1
 script = ExtResource("1_g3k0s")
 
 [node name="TopBar" type="ColorRect" parent="."]
 layout_mode = 0
-offset_right = 600.0
+offset_right = 700.0
 offset_bottom = 56.0
 color = Color(0.059, 0.063, 0.067, 1.0)
 
@@ -33,7 +33,7 @@ offset_right = 260.0
 offset_bottom = 36.0
 theme_override_colors/font_color = Color(0.969, 0.973, 0.973, 1.0)
 theme_override_constants/line_spacing = 0
-text = "Black's Turn"
+text = "黑方落子"
 theme_override_font_sizes/font_size = 16
 
 [node name="MoveCountLabel" type="Label" parent="."]
@@ -44,15 +44,15 @@ offset_top = 34.0
 offset_right = 260.0
 offset_bottom = 50.0
 theme_override_colors/font_color = Color(0.384, 0.400, 0.427, 1.0)
-text = "Move 1"
+text = "第 1 手"
 theme_override_font_sizes/font_size = 11
 
 [node name="UndoContainer" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 440.0
+offset_left = 520.0
 offset_top = 6.0
-offset_right = 600.0
+offset_right = 700.0
 offset_bottom = 56.0
 
 [node name="UndoButton" type="Button" parent="."]
@@ -60,42 +60,54 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 0.0
 offset_top = 6.0
-offset_right = 72.0
+offset_right = 58.0
 offset_bottom = 50.0
 theme_override_colors/font_color = Color(0.816, 0.839, 0.878, 1.0)
 theme_override_colors/font_hover_color = Color(0.969, 0.973, 0.973, 1.0)
-theme_override_colors/font_disabled_color = Color(0.384, 0.400, 0.427, 1.0)
+theme_override_colors/font_disabled_color = Color(0.384, 0.400, 0.427, 0.4)
 theme_override_colors/button_normal = Color(0.031, 0.035, 0.039, 1.0)
 theme_override_colors/button_hover = Color(0.059, 0.063, 0.067, 1.0)
 theme_override_styles/normal = null
 theme_override_styles/hover = null
 theme_override_styles/pressed = null
 theme_override_styles/disabled = null
-theme_override_font_sizes/font_size = 12
-text = "↩ Undo"
+theme_override_font_sizes/font_size = 13
+text = "⟲ 悔棋"
 
 [node name="ResetButton" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 80.0
+offset_left = 64.0
 offset_top = 6.0
-offset_right = 152.0
+offset_right = 124.0
 offset_bottom = 50.0
 theme_override_colors/font_color = Color(0.816, 0.839, 0.878, 1.0)
 theme_override_colors/font_hover_color = Color(0.969, 0.973, 0.973, 1.0)
-theme_override_font_sizes/font_size = 12
-text = "↻ Reset"
+theme_override_font_sizes/font_size = 13
+text = "⟳ 重置"
+
+[node name="ExitButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 130.0
+offset_top = 6.0
+offset_right = 180.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color(0.541, 0.561, 0.596, 1.0)
+theme_override_colors/font_hover_color = Color(0.969, 0.973, 0.973, 1.0)
+theme_override_font_sizes/font_size = 13
+text = "✕ 退出"
 
 [node name="Separator" type="HSeparator" parent="."]
 layout_mode = 0
 offset_top = 55.0
-offset_right = 600.0
+offset_right = 700.0
 offset_bottom = 56.0
 
 [node name="StatusBar" type="ColorRect" parent="."]
 layout_mode = 0
 offset_top = 56.0
-offset_right = 600.0
+offset_right = 700.0
 offset_bottom = 130.0
 color = Color(0.031, 0.035, 0.039, 1.0)
 
@@ -104,10 +116,10 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 16.0
 offset_top = 8.0
-offset_right = 584.0
+offset_right = 684.0
 offset_bottom = 30.0
 theme_override_colors/font_color = Color(0.541, 0.561, 0.596, 1.0)
-text = "Place your stone"
+text = "请落子"
 theme_override_font_sizes/font_size = 12
 
 [node name="PlayerInfo" type="Control" parent="."]
@@ -132,7 +144,7 @@ offset_top = 2.0
 offset_right = 120.0
 offset_bottom = 18.0
 theme_override_colors/font_color = Color(0.384, 0.400, 0.427, 1.0)
-text = "Player 1 (Black)"
+text = "玩家 1 (黑子)"
 theme_override_font_sizes/font_size = 10
 
 [node name="WhiteDot" type="ColorRect" parent="."]
@@ -150,7 +162,7 @@ offset_top = 2.0
 offset_right = 260.0
 offset_bottom = 18.0
 theme_override_colors/font_color = Color(0.384, 0.400, 0.427, 1.0)
-text = "Player 2 (White)"
+text = "玩家 2 (白子)"
 theme_override_font_sizes/font_size = 10
 
 [node name="VictoryPanel" type="ColorRect" parent="."]
@@ -159,7 +171,7 @@ visible = false
 layout_mode = 0
 offset_left = 100.0
 offset_top = 12.0
-offset_right = 500.0
+offset_right = 600.0
 offset_bottom = 110.0
 color = Color(0.059, 0.063, 0.067, 1.0)
 
@@ -168,10 +180,10 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 30.0
 offset_top = 16.0
-offset_right = 370.0
+offset_right = 470.0
 offset_bottom = 48.0
 theme_override_colors/font_color = Color(0.063, 0.725, 0.506, 1.0)
-text = "Black Wins!"
+text = "黑方胜利！"
 theme_override_font_sizes/font_size = 24
 
 [node name="VictorySubtitle" type="Label" parent="."]
@@ -179,10 +191,10 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 30.0
 offset_top = 48.0
-offset_right = 370.0
+offset_right = 470.0
 offset_bottom = 66.0
 theme_override_colors/font_color = Color(0.541, 0.561, 0.596, 1.0)
-text = "5 in a row detected"
+text = "五子连珠，恭喜！"
 theme_override_font_sizes/font_size = 12
 
 [node name="PlayAgainButton" type="Button" parent="."]
@@ -190,9 +202,9 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 30.0
 offset_top = 72.0
-offset_right = 160.0
-offset_bottom = 94.0
+offset_right = 170.0
+offset_bottom = 98.0
 theme_override_colors/font_color = Color(0.969, 0.973, 0.973, 1.0)
 theme_override_colors/font_hover_color = Color(1.0, 1.0, 1.0, 1.0)
-theme_override_font_sizes/font_size = 13
-text = "Play Again"
+theme_override_font_sizes/font_size = 14
+text = "再来一局"
