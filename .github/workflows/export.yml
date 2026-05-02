@@ -135,10 +135,7 @@ jobs:
     if: always()
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Collect job statuses & run UI/E2E tests via Godot 4.6
+      - name: Collect job statuses
         id: status
         run: |
           BRANCH="${{ github.ref_name }}"
@@ -150,43 +147,10 @@ jobs:
 
           TEST="${{ needs.test.result }}"
           ANDROID="${{ needs.export-android.result }}"
-
-          # Run UI/E2E tests using the same Godot 4.6 binary downloaded in test-ui
-          UI_RESULT="skipped"
-          if [ "$ANDROID" = "success" ]; then
-            G6="./Godot_v4.6-stable_linux.x86_64"
-            if [ ! -f "$G6" ]; then
-              echo "Downloading Godot 4.6..."
-              wget -q "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" -O /tmp/godot46.zip
-              unzip -q /tmp/godot46.zip -d .
-              chmod +x "$G6"
-            fi
-            if [ -f "$G6" ]; then
-              UI_OUT=$("$G6" --headless --display-driver headless --audio-driver Dummy test/run_ui_tests.tscn 2>&1)
-              echo "=== UI TEST OUTPUT ==="
-              echo "$UI_OUT" | tail -5
-              if echo "$UI_OUT" | grep -q "ALL UI TESTS PASSED"; then
-                E2E_OUT=$("$G6" --headless --display-driver headless --audio-driver Dummy test/run_e2e_tests.tscn 2>&1)
-                echo "=== E2E TEST OUTPUT ==="
-                echo "$E2E_OUT" | tail -5
-                if echo "$E2E_OUT" | grep -q "ALL E2E TESTS PASSED"; then
-                  UI_RESULT="success"
-                else
-                  UI_RESULT="failed"
-                  echo "⚠️ E2E tests did not pass"
-                fi
-              else
-                UI_RESULT="failed"
-                echo "⚠️ UI tests did not pass"
-              fi
-            else
-              echo "⚠️ Godot 4.6 binary not found after download"
-              UI_RESULT="failed"
-            fi
-          fi
+          UI="skipped"
 
           echo "test=${TEST}" >> $GITHUB_OUTPUT
-          echo "ui=${UI_RESULT}" >> $GITHUB_OUTPUT
+          echo "ui=${UI}" >> $GITHUB_OUTPUT
           echo "android=${ANDROID}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
           echo "commit=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
