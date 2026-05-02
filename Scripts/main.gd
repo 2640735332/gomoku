@@ -27,7 +27,15 @@ func _ready():
 	# 监听大小变化（横竖屏切换）
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	
+	# 启动 BGM（短暂延迟确保 AudioServer 就绪）
+	if sound_manager:
+		call_deferred(&"_start_bgm_deferred")
+	
 	_refresh()
+
+func _start_bgm_deferred():
+	if sound_manager:
+		sound_manager.start_bgm()
 
 func _layout_elements():
 	"""根据当前 viewport 尺寸动态布局 Board 和 UI"""
@@ -97,10 +105,18 @@ func _refresh():
 	var was_game_over = ui.game_state.game_over if ui and ui.game_state else false
 	ui.update_ui()
 	
-	# Play victory sound when game just ended
+	# Play victory sound + switch BGM when game just ended
 	if ui and ui.game_state and ui.game_state.game_over and not was_game_over:
-		if ui.game_state.winner != GameState.EMPTY:
-			sound_manager.play_victory()
+		if ui.game_state.winner == GameState.BLACK:
+			sound_manager.play_victory_black()
+			sound_manager.transition_bgm("victory_black")
+		elif ui.game_state.winner == GameState.WHITE:
+			sound_manager.play_victory_white()
+			sound_manager.transition_bgm("victory_white")
+	
+	# Reset BGM to idle when game resets
+	if was_game_over and not (ui and ui.game_state and ui.game_state.game_over):
+		sound_manager.transition_bgm("idle")
 	
 	# Update move history UI if applicable
 	if has_node("MoveHistory"):
