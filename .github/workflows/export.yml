@@ -75,7 +75,7 @@ jobs:
   ###########################################################################
   export-android:
     name: Android Export
-    needs: [test, test-ui]
+    needs: [test]
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.3
@@ -131,12 +131,19 @@ jobs:
   ###########################################################################
   notify:
     name: Notification
-    needs: [test, test-ui, export-android]
+    needs: [test, export-android]
     if: always()
     runs-on: ubuntu-24.04
     steps:
-      - name: Collect job statuses
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Collect job statuses & run UI/E2E tests on server
         id: status
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           BRANCH="${{ github.ref_name }}"
           COMMIT="${{ github.sha }}"
@@ -146,11 +153,24 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           TEST="${{ needs.test.result }}"
-          UI="${{ needs.test-ui.result }}"
           ANDROID="${{ needs.export-android.result }}"
 
+          # Run UI/E2E tests on server (has local godot4)
+          UI_RESULT="skipped"
+          if [ -n "$SSH_KEY" ] && [ -n "$SERVER" ] && [ "$ANDROID" = "success" ]; then
+            echo "$SSH_KEY" > /tmp/ssh_key
+            chmod 600 /tmp/ssh_key
+            UI_RESULT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+              -i /tmp/ssh_key "${SERVER_USER}@${SERVER}" \
+              "cd ~/godot-projects/gomoku && \
+               timeout 120 ./godot4 --headless test/run_ui_tests.tscn 2>&1 | tail -5 && \
+               echo '---E2E---' && \
+               timeout 120 ./godot4 --headless test/run_e2e_tests.tscn 2>&1 | tail -5" 2>/dev/null || echo "failed")
+            echo "$UI_RESULT" | grep -q "ALL" && UI_RESULT="success" || UI_RESULT="failed"
+          fi
+
           echo "test=${TEST}" >> $GITHUB_OUTPUT
-          echo "ui=${UI}" >> $GITHUB_OUTPUT
+          echo "ui=${UI_RESULT}" >> $GITHUB_OUTPUT
           echo "android=${ANDROID}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
           echo "commit=${COMMIT_SHORT}" >> $GITHUB_OUTPUT

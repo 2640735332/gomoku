@@ -22,16 +22,20 @@ func _ready():
 	add_child(t)
 	t.start()
 	
+	print("  Loading Main scene...")
 	main = Main.instantiate()
+	print("  Main instantiated, adding as child...")
 	add_child(main)
+	print("  Waiting for process_frame...")
 	await get_tree().process_frame
+	print("  process_frame received")
 	
+	print("  Looking for GameBoard...")
 	board = main.find_child("GameBoard", true, false)
+	print("  GameBoard found: ", board != null)
+	print("  Looking for GameUI...")
 	ui = main.find_child("GameUI", true, false)
-
-func _on_test_timeout():
-	print("⏰ TEST TIMEOUT after 120 seconds — forcing exit")
-	get_tree().quit(1)
+	print("  GameUI found: ", ui != null)
 	
 	if !board or !ui:
 		print("❌ FATAL: Failed to find Board/UI in scene")
@@ -41,8 +45,11 @@ func _on_test_timeout():
 	# ────────────────────────────────────────
 	# Test 1: Click cell (7,7) — black stone placed
 	# ────────────────────────────────────────
+	print("  Starting test 1...")
 	board.cell_clicked.emit(7, 7)
+	print("  Signal emitted, waiting for process_frame...")
 	await get_tree().process_frame
+	print("  process_frame after emit received")
 	
 	var gs = ui.game_state
 	if gs.board[7][7] == GameState.BLACK:
@@ -387,3 +394,7 @@ func _on_test_timeout():
 	else:
 		print("✅ ALL E2E TESTS PASSED")
 		get_tree().quit(0)
+
+func _on_test_timeout():
+	print("⏰ TEST TIMEOUT after 120 seconds — forcing exit")
+	get_tree().quit(1)
