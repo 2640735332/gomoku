@@ -35,8 +35,8 @@ func _layout_elements():
 	var vp_w = vp_size.x
 	var vp_h = vp_size.y
 	
-	# UI 高度固定 130px，贴底
-	var ui_h = 130
+	# UI 高度固定 150px，贴底
+	var ui_h = 150
 	var ui_top = vp_h - ui_h
 	
 	if ui:

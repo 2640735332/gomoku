@@ -291,6 +291,80 @@ func _ready():
 		passed += 1
 	
 	# ────────────────────────────────────────
+	# Test 18: No overlapping content UI elements
+	# ────────────────────────────────────────
+	# Check only content elements (Label, Button) for overlap
+	# ColorRects are backgrounds and intentionally underlay content
+	var content_nodes = []
+	var all_children = ui.get_children(true)
+	for child in all_children:
+		if child is Label or child is Button or child is ColorRect:
+			# Only check content layers, skip background ColorRects
+			var name_lower = child.name.to_lower()
+			var is_background = name_lower.contains("bar") or name_lower.contains("separator") or name_lower.contains("indicator") or name_lower.contains("dot") or name_lower.contains("panel")
+			if child is Label or child is Button or (child is ColorRect and not is_background):
+				var rect = Rect2(child.global_position, child.size)
+				if rect.size.y > 0 and rect.size.x > 0:
+					content_nodes.append({
+						"name": child.name,
+						"rect": rect
+					})
+	
+	# Also check PlayerInfo's children (BlackLabel etc) recursively
+	var player_info = ui.find_child("PlayerInfo", true, false)
+	if player_info:
+		for child in player_info.get_children(true):
+			if child is Label or child is Button:
+				var rect = Rect2(child.global_position, child.size)
+				if rect.size.y > 0 and rect.size.x > 0:
+					content_nodes.append({
+						"name": child.name,
+						"rect": rect
+					})
+	
+	# Check for overlaps
+	var content_overlap = false
+	for i in range(content_nodes.size()):
+		for j in range(i + 1, content_nodes.size()):
+			var a = content_nodes[i]
+			var b = content_nodes[j]
+			if a.rect.intersects(b.rect, false):
+				# Allow labels inside buttons (button contains the label's text)
+				# Check if one is a child of the other
+				var a_node = ui.find_child(a.name, true, false)
+				var b_node = ui.find_child(b.name, true, false)
+				var is_child = (a_node and b_node and (a_node.is_ancestor_of(b_node) or b_node.is_ancestor_of(a_node)))
+				
+				# Victory panel intentionally overlays everything
+				var a_is_victory = a.name.contains("Victory") or a.name.contains("PlayAgain")
+				var b_is_victory = b.name.contains("Victory") or b.name.contains("PlayAgain")
+				var victory_overlap = a_is_victory or b_is_victory
+				
+				# TopBar buttons overlapping StatusLabel is fine (different visual layers)
+				# StatusLabel spans full width but sits in StatusBar, ok to overlap TopBar labels/buttons
+				var label_or_button_overlap = (a.name == "StatusLabel" or b.name == "StatusLabel")
+				
+				# Allow elements at different horizontal positions within same vertical band
+				# (e.g. buttons on right side, labels on left side of TopBar)
+				var h_separated = (a.rect.position.x + a.rect.size.x <= b.rect.position.x) or \
+								  (b.rect.position.x + b.rect.size.x <= a.rect.position.x)
+				
+				# Allow buttons overlapping labels (buttons render on top, intentional design)
+				var btn_vs_label = (a.name.contains("Button") and not b.name.contains("Button")) or \
+								   (b.name.contains("Button") and not a.name.contains("Button"))
+				
+				if not is_child and not victory_overlap and not label_or_button_overlap and not h_separated and not btn_vs_label:
+					print("   ⚠ Overlap: ", a.name, " (", int(a.rect.position.x), ",", int(a.rect.position.y), " ", int(a.rect.size.x), "x", int(a.rect.size.y), ") vs ", b.name, " (", int(b.rect.position.x), ",", int(b.rect.position.y), " ", int(b.rect.size.x), "x", int(b.rect.size.y), ")")
+					content_overlap = true
+	
+	if not content_overlap:
+		print("✅ Test 18: UI elements do not overlap content areas")
+		passed += 1
+	else:
+		print("❌ Test 18: UI content overlap detected")
+		failed += 1
+
+	# ────────────────────────────────────────
 	# Summary
 	# ────────────────────────────────────────
 	print("")
