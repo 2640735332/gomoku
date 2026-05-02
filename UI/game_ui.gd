@@ -22,6 +22,14 @@ var game_state: GameState
 
 func _ready():
 	update_ui()
+	if undo_button:
+		undo_button.pressed.connect(_on_undo_pressed)
+	if reset_button:
+		reset_button.pressed.connect(_on_reset_pressed)
+	if play_again_button:
+		play_again_button.pressed.connect(_on_play_again_pressed)
+	if exit_button:
+		exit_button.pressed.connect(_on_exit_pressed)
 
 func update_ui():
 	if not game_state:
