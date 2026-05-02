@@ -1,22 +1,18 @@
 # sound_manager.gd
-# 程序化音效管理器 — 用 AudioStreamWAV 合成音效 + BGM
-# 无需任何外部音频文件，全部代码生成
+# 程序化音效管理器 — 全部代码生成，无外部文件
+# 使用 AudioStreamPlayer + AudioStreamWAV 播放短音效
+# BGM 使用实时合成 + 循环播放
 extends Node
 
-# ── 音效播放器（短音效） ──
+# ── 音频播放器 ──
 var _place_bus: AudioStreamPlayer
 var _undo_bus: AudioStreamPlayer
-var _victory_bus: AudioStreamPlayer  # 复用为当前胜利音效
+var _victory_bus: AudioStreamPlayer
 var _click_bus: AudioStreamPlayer
-
-# ── BGM 播放器 ──
 var _bgm_player: AudioStreamPlayer
-var _current_bgm_data: PackedByteArray = PackedByteArray()
-var _current_bgm_id: String = ""
-var _bgm_volume_db: float = -10.0
+var _bgm_stream: AudioStreamWAV
 
-const SAMPLE_RATE = 22050  # 低采样率足够
-const BGM_SAMPLE_RATE = 22050  # BGM 同样
+const SAMPLE_RATE = 22050
 
 # 中国五声音阶频率 (C4 宫调式 = C D E G A)
 const PENTATONIC = {
@@ -30,385 +26,234 @@ const PENTATONIC = {
 }
 
 func _ready():
-	print("🔊 SoundManager._ready() called")
-	# 短音效播放器
-	_place_bus = _make_player(-3.0)
-	_undo_bus = _make_player(-3.0)
-	_victory_bus = _make_player(0.0)
-	_click_bus = _make_player(-4.0)
-	
-	add_child(_place_bus)
-	add_child(_undo_bus)
-	add_child(_victory_bus)
-	add_child(_click_bus)
-	
-	# BGM 播放器
-	_bgm_player = _make_player(-6.0)
-	_bgm_player.finished.connect(_on_bgm_finished)
-	add_child(_bgm_player)
-	print("🔊 SoundManager ready complete, bgm_player volume: ", _bgm_player.volume_db)
+	print("🔊 SoundManager init...")
+	_place_bus = _make_player(-4.0, "place")
+	_undo_bus = _make_player(-4.0, "undo")
+	_victory_bus = _make_player(-2.0, "victory")
+	_click_bus = _make_player(-6.0, "click")
+	_bgm_player = _make_player(-4.0, "bgm")
+	print("🔊 SoundManager ready")
 
-func _make_player(volume_db: float) -> AudioStreamPlayer:
+func _make_player(vol: float, name_hint: String) -> AudioStreamPlayer:
 	var p = AudioStreamPlayer.new()
-	p.volume_db = volume_db
+	p.volume_db = vol
+	p.name = name_hint
+	add_child(p)
 	return p
 
 # ══════════════════════════════════════════
-# BGM 系统
+# 短音效（AudioStreamWAV 紧凑合成）
 # ══════════════════════════════════════════
+
+func make_wav_bytes(duration: float, synth: Callable) -> PackedByteArray:
+	"""合成 16-bit mono PCM 数据（使用 mono 减少兼容问题）"""
+	var n = int(SAMPLE_RATE * duration)
+	var buf = PackedByteArray()
+	buf.resize(n * 2)  # 16-bit mono
+	var t_step = 1.0 / SAMPLE_RATE
+	var t = 0.0
+	for i in range(n):
+		var s = clamp(synth.call(t), -1.0, 1.0)
+		var v = clampi(int(s * 32767), -32768, 32767)
+		buf.encode_s16(i * 2, v)
+		t += t_step
+	return buf
+
+func _play_pcm(player: AudioStreamPlayer, pcm: PackedByteArray):
+	var wav = AudioStreamWAV.new()
+	wav.data = pcm
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = SAMPLE_RATE
+	wav.stereo = false
+	wav.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	player.stream = wav
+	player.play()
+
+func play_place_stone():
+	var pcm = make_wav_bytes(0.1, func(t):
+		var f = 600.0 + t * 3000.0
+		var a = max(0, 1.0 - t * 12.0)
+		return sin(f * t * TAU) * a * 0.5 + sin(f * 1.5 * t * TAU) * a * 0.25
+	)
+	_play_pcm(_place_bus, pcm)
+
+func play_undo():
+	var pcm = make_wav_bytes(0.12, func(t):
+		var f = 800.0 - t * 2500.0
+		var a = max(0, 1.0 - t * 10.0)
+		return sin(f * t * TAU) * a * 0.4
+	)
+	_play_pcm(_undo_bus, pcm)
+
+func play_click():
+	var pcm = make_wav_bytes(0.03, func(t):
+		return sin(2500.0 * t * TAU) * max(0, 1.0 - t * 40.0) * 0.25
+	)
+	_play_pcm(_click_bus, pcm)
+
+func play_victory_black():
+	var pcm = make_wav_bytes(0.8, func(t):
+		var a = max(0, 1.0 - t * 1.1)
+		var c = sin(130.81 * t * TAU) * 0.4
+		var e = sin(164.81 * t * TAU) * 0.25
+		var g = sin(196.0 * t * TAU) * 0.2
+		var d = sin(45.0 * t * TAU) * exp(-t * 6.0) * 0.3
+		return (c + e + g + d) * a * 0.5
+	)
+	_play_pcm(_victory_bus, pcm)
+
+func play_victory_white():
+	var pcm = make_wav_bytes(0.8, func(t):
+		var a = max(0, 1.0 - t * 1.1)
+		var v = 1.0 + 0.02 * sin(t * 30.0)
+		var f
+		if t < 0.15: f = 523.25
+		elif t < 0.3: f = 659.25
+		elif t < 0.5: f = 783.99
+		else: f = 1046.5
+		return sin(f * v * t * TAU) * a * 0.5 + sin(f * 0.5 * v * t * TAU) * a * 0.2
+	)
+	_play_pcm(_victory_bus, pcm)
+
+# ══════════════════════════════════════════
+# BGM 系统 — 预合成 + 手动循环
+# ══════════════════════════════════════════
+
+var _bgm_idle_pcm: PackedByteArray = PackedByteArray()
+var _bgm_black_pcm: PackedByteArray = PackedByteArray()
+var _bgm_white_pcm: PackedByteArray = PackedByteArray()
+var _current_bgm: String = ""
+
+func _init():
+	# 在 _ready() 前预合成 BGM，避免启动卡顿
+	_bgm_idle_pcm = _synth_bgm(_gen_pentatonic_idle(0.6))
+	_bgm_black_pcm = _synth_bgm(_gen_heroic_bgm(0.6))
+	_bgm_white_pcm = _synth_bgm(_gen_triumphant_bgm(0.6))
+
+func _synth_bgm(gen: Callable) -> PackedByteArray:
+	"""合成 20 秒 BGM 循环"""
+	var dur = 20.0
+	var n = int(SAMPLE_RATE * dur)
+	var buf = PackedByteArray()
+	buf.resize(n * 2)
+	var t = 0.0
+	var step = 1.0 / SAMPLE_RATE
+	for i in range(n):
+		var s = clamp(gen.call(t), -1.0, 1.0)
+		var v = clampi(int(s * 32767), -32768, 32767)
+		buf.encode_s16(i * 2, v)
+		t += step
+	return buf
+
+func _play_bgm_internal(pcm: PackedByteArray):
+	if _bgm_player.stream:
+		_bgm_player.stop()
+	var wav = AudioStreamWAV.new()
+	wav.data = pcm
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = SAMPLE_RATE
+	wav.stereo = false
+	wav.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	_bgm_player.stream = wav
+	_bgm_player.play()
+
+func start_bgm():
+	if not _current_bgm:
+		_current_bgm = "idle"
+		_play_bgm_internal(_bgm_idle_pcm)
+		# 用 Timer 手动循环
+		_bgm_player.finished.connect(_on_bgm_loop)
+
+func _on_bgm_loop():
+	# BGM 循环回放
+	if _bgm_player.stream:
+		_bgm_player.play()
+
+func stop_bgm():
+	_current_bgm = ""
+	_bgm_player.stop()
+	_bgm_player.stream = null
+
+func transition_bgm(new_id: String):
+	if _current_bgm == new_id:
+		return
+	_current_bgm = new_id
+	match new_id:
+		"victory_black":
+			_play_bgm_internal(_bgm_black_pcm)
+		"victory_white":
+			_play_bgm_internal(_bgm_white_pcm)
+		_:
+			_play_bgm_internal(_bgm_idle_pcm)
 
 func is_bgm_playing() -> bool:
 	return _bgm_player.playing and _bgm_player.stream != null
 
-func _on_bgm_finished():
-	"""BGM 循环播放 — 手动回放（兼容 Android，不依赖 LOOP_FORWARD）"""
-	if _bgm_player.stream:
-		_bgm_player.play()
+# ══════════════════════════════════════════
+# BGM 波形生成器
+# ══════════════════════════════════════════
 
-func start_bgm():
-	"""开始播放背景音乐"""
-	print("🔊 start_bgm() called, current_bgm_id: ", _current_bgm_id)
-	if not _current_bgm_id:
-		_current_bgm_id = "idle"
-		print("🔊 Synthesizing BGM...")
-		_current_bgm_data = _synthesize_bgm(_generate_pentatonic_idle(30.0))
-		var wav = AudioStreamWAV.new()
-		wav.data = _current_bgm_data
-		wav.format = AudioStreamWAV.FORMAT_16_BITS
-		wav.mix_rate = BGM_SAMPLE_RATE
-		wav.stereo = true
-		wav.loop_mode = AudioStreamWAV.LOOP_DISABLED  # 不用 loop 模式，用 finished 回调手动循环
-		_bgm_player.stream = wav
-		print("🔊 BGM synthesized: ", _current_bgm_data.size(), " bytes")
-	_bgm_player.play()
-	print("🔊 BGM play() called, playing: ", _bgm_player.playing)
-
-func stop_bgm():
-	"""停止 BGM"""
-	print("🔊 stop_bgm() called")
-	_bgm_player.stop()
-	_bgm_player.stream = null
-
-func transition_bgm(new_bgm_id: String):
-	"""切换到新的 BGM 类型"""
-	if _current_bgm_id == new_bgm_id:
-		return
-	
-	print("🔊 transition_bgm: ", new_bgm_id)
-	_current_bgm_id = new_bgm_id
-	
-	if new_bgm_id == "victory_black":
-		_current_bgm_data = _synthesize_bgm(_generate_heroic_bgm(15.0, 0.6))
-	elif new_bgm_id == "victory_white":
-		_current_bgm_data = _synthesize_bgm(_generate_triumphant_bgm(15.0, 0.6))
-	else:
-		_current_bgm_data = _synthesize_bgm(_generate_pentatonic_idle(30.0))
-	
-	var wav = AudioStreamWAV.new()
-	wav.data = _current_bgm_data
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = BGM_SAMPLE_RATE
-	wav.stereo = true
-	wav.loop_mode = AudioStreamWAV.LOOP_DISABLED
-	_bgm_player.stream = wav
-	_bgm_player.play()
-	print("🔊 transition play() called, playing: ", _bgm_player.playing)
-
-func _make_wav(pcm_data: PackedByteArray, sample_rate: int, loop: bool) -> AudioStreamWAV:
-	var wav = AudioStreamWAV.new()
-	wav.data = pcm_data
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = sample_rate
-	wav.stereo = true
-	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD if loop else AudioStreamWAV.LOOP_DISABLED
-	return wav
-
-func _synthesize_bgm(generator: Callable) -> PackedByteArray:
-	"""合成 BGM 循环（16-bit stereo PCM）"""
-	var duration = 60.0  # 60秒循环
-	var num_samples = int(BGM_SAMPLE_RATE * duration)
-	var data = PackedByteArray()
-	data.resize(num_samples * 4)  # 2 samples * 2 bytes
-	
-	var t_step = 1.0 / BGM_SAMPLE_RATE
-	var t = 0.0
-	for i in range(num_samples):
-		var sample = generator.call(t)
-		sample = clamp(sample, -1.0, 1.0)
-		var int_sample = int(sample * 32767)
-		int_sample = clampi(int_sample, -32768, 32767)
-		
-		var offset = i * 4
-		data.encode_s16(offset, int_sample)     # L
-		data.encode_s16(offset + 2, int_sample)  # R
-	
-	return data
-
-func _generate_pentatonic_idle(duration: float) -> Callable:
-	"""生成平和的中国风BGM（五声音阶即兴循环）"""
-	# 音符序列：缓慢的琶音上行下行
+func _gen_pentatonic_idle(vol: float) -> Callable:
 	var notes = [
-		{"freq": PENTATONIC["C4"], "dur": 2.0},
-		{"freq": PENTATONIC["E4"], "dur": 2.0},
-		{"freq": PENTATONIC["G4"], "dur": 2.0},
-		{"freq": PENTATONIC["A4"], "dur": 2.0},
-		{"freq": PENTATONIC["G4"], "dur": 1.5},
-		{"freq": PENTATONIC["E4"], "dur": 1.5},
-		{"freq": PENTATONIC["D4"], "dur": 1.5},
-		{"freq": PENTATONIC["C4"], "dur": 1.5},
-		{"freq": PENTATONIC["E4"], "dur": 2.0},
-		{"freq": PENTATONIC["A4"], "dur": 1.5},
-		{"freq": PENTATONIC["G4"], "dur": 1.0},
-		{"freq": PENTATONIC["E4"], "dur": 1.0},
-		{"freq": PENTATONIC["D4"], "dur": 0.75},
-		{"freq": PENTATONIC["C5"], "dur": 0.75},
-		{"freq": PENTATONIC["A4"], "dur": 0.75},
-		{"freq": PENTATONIC["G4"], "dur": 0.75},
-		{"freq": PENTATONIC["E4"], "dur": 1.5},
-		{"freq": PENTATONIC["C4"], "dur": 3.0},
-		{"freq": PENTATONIC["G3"], "dur": 2.0},
-		{"freq": PENTATONIC["A3"], "dur": 2.0},
-		{"freq": PENTATONIC["C4"], "dur": 2.0},
-		{"freq": PENTATONIC["E4"], "dur": 2.0},
-		{"freq": PENTATONIC["D4"], "dur": 1.5},
-		{"freq": PENTATONIC["C4"], "dur": 1.5},
-		{"freq": PENTATONIC["A3"], "dur": 1.0},
-		{"freq": PENTATONIC["G3"], "dur": 1.0},
-		{"freq": PENTATONIC["E3"], "dur": 1.0},
-		{"freq": PENTATONIC["G3"], "dur": 1.0},
-		{"freq": PENTATONIC["C4"], "dur": 4.0},
-		{"freq": PENTATONIC["E4"], "dur": 2.0},
-		{"freq": PENTATONIC["G4"], "dur": 2.0},
+		PENTATONIC["C4"], PENTATONIC["E4"], PENTATONIC["G4"], PENTATONIC["A4"],
+		PENTATONIC["G4"], PENTATONIC["E4"], PENTATONIC["D4"], PENTATONIC["C4"],
+		PENTATONIC["E4"], PENTATONIC["A4"], PENTATONIC["G4"], PENTATONIC["E4"],
 	]
-	
-	var cycle_dur = 0.0
-	for n in notes:
-		cycle_dur += n.dur
-	
-	# 低音持续音 (C3 drone)
-	var drone_freq = PENTATONIC["C3"]
-	var drone_freq2 = PENTATONIC["G3"]
-	
+	var ndur = 1.8
+	var cycle = ndur * len(notes)
 	return func(t: float):
-		var loop_t = fmod(t, cycle_dur)
-		var accum = 0.0
-		var freq = PENTATONIC["C4"]
-		var note_amp = 0.0
-		var vibrato = 0.0
-		
-		for n in notes:
-			var next_accum = accum + n.dur
-			if loop_t >= accum and loop_t < next_accum:
-				var nt = (loop_t - accum) / n.dur
-				# 包络：起音 + 衰减
-				var env = min(nt * 4.0, 1.0)  # 快速起音
-				env *= max(0, 1.0 - nt * 0.3)  # 缓慢衰减
-				freq = n.freq
-				note_amp = env
-				# 颤音（中国风韵味）
-				vibrato = 1.0 + 0.015 * sin(t * 8.0 + freq * 0.1)
-				break
-			accum = next_accum
-		
-		# 主旋律
-		var melody = sin(freq * vibrato * t * TAU) * note_amp * 0.2
-		# 次谐波柔和
-		melody += sin(freq * 0.5 * t * TAU) * note_amp * 0.1
-		
-		# 低音持续音（C3 drone + G3 五度）
-		var drone = 0.0
-		drone += sin(drone_freq * t * TAU) * 0.06
-		drone += sin(drone_freq2 * t * TAU) * 0.04
-		
-		# 填充音（柔和的和声背景）
-		var pad = 0.0
-		pad += sin(PENTATONIC["C4"] * t * TAU) * 0.015
-		pad += sin(PENTATONIC["E4"] * t * TAU) * 0.012
-		pad += sin(PENTATONIC["G4"] * t * TAU) * 0.01
-		
-		return melody + drone + pad
+		var lt = fmod(t, cycle)
+		var idx = int(lt / ndur) % len(notes)
+		var nt = fmod(lt, ndur) / ndur
+		var env = min(nt * 4.0, 1.0) * max(0, 1.0 - nt * 0.4)
+		var vib = 1.0 + 0.015 * sin(t * 8.0)
+		var f = notes[idx] * vib
+		var mel = sin(f * t * TAU) * env * 0.18 + sin(f * 0.5 * t * TAU) * env * 0.08
+		var drone = sin(130.81 * t * TAU) * 0.05 + sin(196.0 * t * TAU) * 0.03
+		var pad = sin(261.63 * t * TAU) * 0.012 + sin(329.63 * t * TAU) * 0.01 + sin(392.0 * t * TAU) * 0.008
+		return (mel + drone + pad) * vol
 
-func _generate_heroic_bgm(duration: float, volume_scale: float) -> Callable:
-	"""黑方胜利 BGM — 深沉、蓄力、史诗感（低音走向）"""
-	# 低音行进：C2 - G2 - C3 - E3 - G3 - C4
-	var bass_notes = [
-		PENTATONIC["C2"], PENTATONIC["G2"],
-		PENTATONIC["C3"], PENTATONIC["E3"],
-		PENTATONIC["G3"], PENTATONIC["C4"],
-		PENTATONIC["G3"], PENTATONIC["E3"],
-		PENTATONIC["C3"], PENTATONIC["G2"],
-		PENTATONIC["C3"], PENTATONIC["G2"],
-		PENTATONIC["C2"], PENTATONIC["G2"],
-		PENTATONIC["E3"], PENTATONIC["C3"],
+func _gen_heroic_bgm(vol: float) -> Callable:
+	var notes = [
+		PENTATONIC["C2"], PENTATONIC["G2"], PENTATONIC["C3"], PENTATONIC["E3"],
+		PENTATONIC["G3"], PENTATONIC["C4"], PENTATONIC["G3"], PENTATONIC["E3"],
+		PENTATONIC["C3"], PENTATONIC["G2"], PENTATONIC["C3"], PENTATONIC["G2"],
+		PENTATONIC["C2"], PENTATONIC["G2"], PENTATONIC["E3"], PENTATONIC["C3"],
 	]
-	var bass_dur = 1.5
-	var cycle_dur = bass_dur * len(bass_notes)
-	
+	var ndur = 1.2
+	var cycle = ndur * len(notes)
 	return func(t: float):
-		var loop_t = fmod(t, cycle_dur)
-		var bass_idx = int(loop_t / bass_dur)
-		var bass_nt = fmod(loop_t, bass_dur) / bass_dur
-		var bass_freq = bass_notes[bass_idx]
-		var bass_env = min(bass_nt * 8.0, 1.0) * max(0, 1.0 - bass_nt * 0.5)
-		
-		# 低音 — 深沉有力
-		var output = 0.0
-		output += sin(bass_freq * t * TAU) * bass_env * 0.15
-		output += sin(bass_freq * 2.0 * t * TAU) * bass_env * 0.04
-		
-		# 中音和弦 — 进行感
-		var chord_t = fmod(t, 4.0)
-		var chord_freq = PENTATONIC["C4"]
-		var chord_env = max(0, 1.0 - chord_t * 0.15)
-		if chord_t < 2.0:
-			chord_freq = PENTATONIC["C4"]
-		else:
-			chord_freq = PENTATONIC["G4"]
-		output += sin(chord_freq * t * TAU) * chord_env * 0.08
-		output += sin(chord_freq * 1.5 * t * TAU) * chord_env * 0.05
-		
-		# 鼓点冲击（每4拍一个）
-		var beat_t = fmod(t, 4.0)
-		var beat_env = max(0, 1.0 - beat_t * 10.0) if beat_t < 0.2 else 0.0
-		output += sin(60.0 * t * TAU) * beat_env * 0.2
-		
-		return output * volume_scale
+		var lt = fmod(t, cycle)
+		var idx = int(lt / ndur) % len(notes)
+		var nt = fmod(lt, ndur) / ndur
+		var env = min(nt * 6.0, 1.0) * max(0, 1.0 - nt * 0.6)
+		var f = notes[idx]
+		var bass = sin(f * t * TAU) * env * 0.12 + sin(f * 2.0 * t * TAU) * env * 0.03
+		var chord_t = fmod(t, 3.0)
+		var cf = PENTATONIC["C4"] if chord_t < 1.5 else PENTATONIC["G4"]
+		var ce = max(0, 1.0 - chord_t * 0.2)
+		var chord = sin(cf * t * TAU) * ce * 0.06 + sin(cf * 1.5 * t * TAU) * ce * 0.04
+		var beat_t = fmod(t, 3.0)
+		var beat = sin(60.0 * t * TAU) * (max(0, 1.0 - beat_t * 12.0) if beat_t < 0.15 else 0.0) * 0.15
+		return (bass + chord + beat) * vol
 
-func _generate_triumphant_bgm(duration: float, volume_scale: float) -> Callable:
-	"""白方胜利 BGM — 明亮、欢快、上升（高音琶音）"""
-	# 琶音上行循环：C5 E5 G5 A5 C6 A5 G5 E5 ...
-	var arp_notes = [
-		PENTATONIC["C5"], PENTATONIC["E5"],
-		PENTATONIC["G5"], PENTATONIC["A5"],
-		PENTATONIC["C6"], PENTATONIC["A5"],
-		PENTATONIC["G5"], PENTATONIC["E5"],
+func _gen_triumphant_bgm(vol: float) -> Callable:
+	var notes = [
+		PENTATONIC["C5"], PENTATONIC["E5"], PENTATONIC["G5"], PENTATONIC["A5"],
+		PENTATONIC["C6"], PENTATONIC["A5"], PENTATONIC["G5"], PENTATONIC["E5"],
 	]
-	var arp_dur = 0.25  # 快速琶音
-	var cycle_dur = arp_dur * len(arp_notes)
-	
+	var ndur = 0.2
+	var cycle = ndur * len(notes)
 	return func(t: float):
-		var loop_t = fmod(t, cycle_dur)
-		var arp_idx = int(loop_t / arp_dur)
-		var arp_nt = fmod(loop_t, arp_dur) / arp_dur
-		var arp_freq = arp_notes[arp_idx]
-		var arp_env = min(arp_nt * 10.0, 1.0) * max(0, 1.0 - arp_nt * 2.0)
-		
-		# 主音 — 明亮上升
-		var output = 0.0
-		output += sin(arp_freq * t * TAU) * arp_env * 0.18
-		output += sin(arp_freq * 2.0 * t * TAU) * arp_env * 0.05
-		
-		# 高音泛音 — 闪烁感
-		output += sin(arp_freq * 3.0 * t * TAU) * arp_env * 0.02
-		
-		# 低音支持（G3 持续）
-		output += sin(PENTATONIC["G3"] * t * TAU) * 0.04
-		
-		# 颤音效果 — 整个音色更活泼
+		var lt = fmod(t, cycle)
+		var idx = int(lt / ndur) % len(notes)
+		var nt = fmod(lt, ndur) / ndur
+		var env = min(nt * 8.0, 1.0) * max(0, 1.0 - nt * 3.0)
+		var f = notes[idx]
+		var mel = sin(f * t * TAU) * env * 0.15 + sin(f * 2.0 * t * TAU) * env * 0.04 + sin(f * 3.0 * t * TAU) * env * 0.015
+		var bass = sin(196.0 * t * TAU) * 0.03
 		var vib = 1.0 + 0.02 * sin(t * 12.0)
-		output += sin(PENTATONIC["C5"] * vib * t * TAU) * 0.03
-		output += sin(PENTATONIC["E5"] * vib * t * TAU) * 0.02
-		
-		# 欢快的短冲击（每两拍）
-		var beat_t = fmod(t, 2.0)
-		var beat_env = max(0, 1.0 - beat_t * 15.0) if beat_t < 0.1 else 0.0
-		output += sin(800.0 * t * TAU) * beat_env * 0.15
-		
-		return output * volume_scale
-
-# ══════════════════════════════════════════
-# 短音效
-# ══════════════════════════════════════════
-
-func play_place_stone():
-	var data = _synthesize(0.1, func(t): 
-		var freq = 600.0 + t * 3000.0
-		var amp = max(0, 1.0 - t * 12.0)
-		return sin(freq * t * TAU) * amp * 0.5 + \
-		       sin(freq * 1.5 * t * TAU) * amp * 0.25
-	)
-	_play_wav(_place_bus, data, SAMPLE_RATE)
-
-func play_undo():
-	var data = _synthesize(0.15, func(t):
-		var freq = 800.0 - t * 2500.0
-		var amp = max(0, 1.0 - t * 8.0)
-		return sin(freq * t * TAU) * amp * 0.4
-	)
-	_play_wav(_undo_bus, data, SAMPLE_RATE)
-
-func play_victory():
-	"""旧兼容接口 — 默认播放黑方胜利（由 main.gd 调用专门的版本）"""
-	play_victory_black()
-
-func play_victory_black():
-	"""黑方胜利音效：深沉的低音和弦 C3 E3 G3 → 加重低音后释放"""
-	var data = _synthesize(0.8, func(t):
-		var amp = max(0, 1.0 - t * 1.1)
-		# C3 + E3 + G3 低音和弦
-		var c3 = sin(PENTATONIC["C3"] * t * TAU) * 0.4
-		var e3 = sin(PENTATONIC["E3"] * t * TAU) * 0.25
-		var g3 = sin(PENTATONIC["G3"] * t * TAU) * 0.2
-		# 低频冲击（模拟大鼓）
-		var drum = sin(45.0 * t * TAU) * exp(-t * 6.0) * 0.3
-		return (c3 + e3 + g3 + drum) * amp * 0.5
-	)
-	_play_wav(_victory_bus, data, SAMPLE_RATE)
-
-func play_victory_white():
-	"""白方胜利音效：明亮的上升琶音 C5 E5 G5 C6 + 泛音"""
-	var data = _synthesize(0.8, func(t):
-		var amp = max(0, 1.0 - t * 1.1)
-		var vib = 1.0 + 0.02 * sin(t * 30.0)
-		# C5 E5 G5 C6 快速琶音
-		var freq
-		if t < 0.15: freq = PENTATONIC["C5"]
-		elif t < 0.3: freq = PENTATONIC["E5"]
-		elif t < 0.5: freq = PENTATONIC["G5"]
-		else: freq = PENTATONIC["C6"]
-		return sin(freq * vib * t * TAU) * amp * 0.5 + \
-		       sin(freq * 0.5 * vib * t * TAU) * amp * 0.2 + \
-		       sin(freq * 2.0 * vib * t * TAU) * amp * 0.1
-	)
-	_play_wav(_victory_bus, data, SAMPLE_RATE)
-
-func play_click():
-	var data = _synthesize(0.03, func(t):
-		var amp = max(0, 1.0 - t * 40.0)
-		return sin(2500.0 * t * TAU) * amp * 0.25
-	)
-	_play_wav(_click_bus, data, SAMPLE_RATE)
-
-# ══════════════════════════════════════════
-# 内部工具函数
-# ══════════════════════════════════════════
-
-func _synthesize(duration: float, synth: Callable) -> PackedByteArray:
-	var num_samples = int(SAMPLE_RATE * duration)
-	var stereo_samples = num_samples * 2
-	var data = PackedByteArray()
-	data.resize(stereo_samples * 2)
-	
-	for i in range(num_samples):
-		var t = float(i) / SAMPLE_RATE
-		var sample = synth.call(t)
-		sample = clamp(sample, -1.0, 1.0)
-		var int_sample = int(sample * 32767)
-		int_sample = clampi(int_sample, -32768, 32767)
-		
-		var offset = i * 4
-		data.encode_s16(offset, int_sample)
-		data.encode_s16(offset + 2, int_sample)
-	
-	return data
-
-func _play_wav(player: AudioStreamPlayer, pcm_data: PackedByteArray, sample_rate: int):
-	var wav = AudioStreamWAV.new()
-	wav.data = pcm_data
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = sample_rate
-	wav.stereo = true
-	wav.loop_mode = AudioStreamWAV.LOOP_DISABLED
-	
-	player.stream = wav
-	player.play()
+		var shimmer = sin(523.25 * vib * t * TAU) * 0.025 + sin(659.25 * vib * t * TAU) * 0.015
+		var beat_t = fmod(t, 1.5)
+		var beat = sin(800.0 * t * TAU) * (max(0, 1.0 - beat_t * 18.0) if beat_t < 0.08 else 0.0) * 0.12
+		return (mel + bass + shimmer + beat) * vol
