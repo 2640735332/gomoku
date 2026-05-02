@@ -27,14 +27,25 @@ func _ready():
 	# 监听大小变化（横竖屏切换）
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	
-	# 启动 BGM（短暂延迟确保 AudioServer 就绪）
+	# 启动 BGM（多次延迟尝试确保 AudioServer 就绪）
 	if sound_manager:
 		call_deferred(&"_start_bgm_deferred")
+		# 二次保险：再延迟0.5秒尝试一次
+		get_tree().create_timer(0.5).timeout.connect(_try_bgm_again)
+		# 三次保险：延迟2秒
+		get_tree().create_timer(2.0).timeout.connect(_try_bgm_again)
 	
 	_refresh()
 
 func _start_bgm_deferred():
 	if sound_manager:
+		print("🎵 Starting BGM (deferred)...")
+		sound_manager.start_bgm()
+
+func _try_bgm_again():
+	"""如果 BGM 还没播放，再试一次"""
+	if sound_manager and not sound_manager.is_bgm_playing():
+		print("🎵 Retrying BGM start...")
 		sound_manager.start_bgm()
 
 func _layout_elements():

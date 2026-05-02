@@ -30,11 +30,12 @@ const PENTATONIC = {
 }
 
 func _ready():
+	print("🔊 SoundManager._ready() called")
 	# 短音效播放器
-	_place_bus = _make_player(-4.0)
-	_undo_bus = _make_player(-4.0)
-	_victory_bus = _make_player(-2.0)
-	_click_bus = _make_player(-6.0)
+	_place_bus = _make_player(-3.0)
+	_undo_bus = _make_player(-3.0)
+	_victory_bus = _make_player(0.0)
+	_click_bus = _make_player(-4.0)
 	
 	add_child(_place_bus)
 	add_child(_undo_bus)
@@ -42,9 +43,10 @@ func _ready():
 	add_child(_click_bus)
 	
 	# BGM 播放器
-	_bgm_player = _make_player(-8.0)
+	_bgm_player = _make_player(-6.0)
 	_bgm_player.finished.connect(_on_bgm_finished)
 	add_child(_bgm_player)
+	print("🔊 SoundManager ready complete, bgm_player volume: ", _bgm_player.volume_db)
 
 func _make_player(volume_db: float) -> AudioStreamPlayer:
 	var p = AudioStreamPlayer.new()
@@ -55,22 +57,35 @@ func _make_player(volume_db: float) -> AudioStreamPlayer:
 # BGM 系统
 # ══════════════════════════════════════════
 
+func is_bgm_playing() -> bool:
+	return _bgm_player.playing and _bgm_player.stream != null
+
 func _on_bgm_finished():
-	"""BGM 循环播放"""
+	"""BGM 循环播放 — 手动回放（兼容 Android，不依赖 LOOP_FORWARD）"""
 	if _bgm_player.stream:
 		_bgm_player.play()
 
 func start_bgm():
 	"""开始播放背景音乐"""
+	print("🔊 start_bgm() called, current_bgm_id: ", _current_bgm_id)
 	if not _current_bgm_id:
 		_current_bgm_id = "idle"
-		_current_bgm_data = _synthesize_bgm(_generate_pentatonic_idle(60.0))
-		var wav = _make_wav(_current_bgm_data, BGM_SAMPLE_RATE, true)
+		print("🔊 Synthesizing BGM...")
+		_current_bgm_data = _synthesize_bgm(_generate_pentatonic_idle(30.0))
+		var wav = AudioStreamWAV.new()
+		wav.data = _current_bgm_data
+		wav.format = AudioStreamWAV.FORMAT_16_BITS
+		wav.mix_rate = BGM_SAMPLE_RATE
+		wav.stereo = true
+		wav.loop_mode = AudioStreamWAV.LOOP_DISABLED  # 不用 loop 模式，用 finished 回调手动循环
 		_bgm_player.stream = wav
+		print("🔊 BGM synthesized: ", _current_bgm_data.size(), " bytes")
 	_bgm_player.play()
+	print("🔊 BGM play() called, playing: ", _bgm_player.playing)
 
 func stop_bgm():
 	"""停止 BGM"""
+	print("🔊 stop_bgm() called")
 	_bgm_player.stop()
 	_bgm_player.stream = null
 
@@ -79,17 +94,25 @@ func transition_bgm(new_bgm_id: String):
 	if _current_bgm_id == new_bgm_id:
 		return
 	
+	print("🔊 transition_bgm: ", new_bgm_id)
 	_current_bgm_id = new_bgm_id
 	
 	if new_bgm_id == "victory_black":
-		_current_bgm_data = _synthesize_bgm(_generate_heroic_bgm(20.0, 0.5))
+		_current_bgm_data = _synthesize_bgm(_generate_heroic_bgm(15.0, 0.6))
 	elif new_bgm_id == "victory_white":
-		_current_bgm_data = _synthesize_bgm(_generate_triumphant_bgm(20.0, 0.5))
+		_current_bgm_data = _synthesize_bgm(_generate_triumphant_bgm(15.0, 0.6))
 	else:
-		_current_bgm_data = _synthesize_bgm(_generate_pentatonic_idle(60.0))
+		_current_bgm_data = _synthesize_bgm(_generate_pentatonic_idle(30.0))
 	
-	_bgm_player.stream = _make_wav(_current_bgm_data, BGM_SAMPLE_RATE, true)
+	var wav = AudioStreamWAV.new()
+	wav.data = _current_bgm_data
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = BGM_SAMPLE_RATE
+	wav.stereo = true
+	wav.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	_bgm_player.stream = wav
 	_bgm_player.play()
+	print("🔊 transition play() called, playing: ", _bgm_player.playing)
 
 func _make_wav(pcm_data: PackedByteArray, sample_rate: int, loop: bool) -> AudioStreamWAV:
 	var wav = AudioStreamWAV.new()
