@@ -24,34 +24,26 @@ color = Color(0.031, 0.035, 0.039, 1.0)
 
 [node name="Content" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = 0.0
-offset_bottom = 0.0
-mouse_filter = 2
-
-[node name="GameUI" parent="Content" instance=ExtResource("2_hjol7")]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 10
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -350.0
-offset_right = 350.0
-offset_bottom = 0.0
-offset_top = -130.0
-
-[node name="GameBoard" parent="Content" instance=ExtResource("3_8y41h")]
-unique_name_in_owner = true
-layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -300.0
-offset_right = 300.0
-offset_bottom = 300.0
+offset_left = -350.0
+offset_top = -350.0
+offset_right = 350.0
+offset_bottom = 350.0
+mouse_filter = 2
+
+[node name="GameUI" parent="Content" instance=ExtResource("2_hjol7")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 570.0
+
+[node name="GameBoard" parent="Content" instance=ExtResource("3_8y41h")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 15.0
+offset_top = 15.0
+offset_right = 585.0
+offset_bottom = 555.0

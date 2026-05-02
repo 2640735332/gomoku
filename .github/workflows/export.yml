@@ -40,6 +40,10 @@ jobs:
         run: |
           godot --headless test/run_tests.tscn
 
+      - name: Run UI Tests
+        run: |
+          godot --headless test/run_ui_tests.tscn
+
   ###########################################################################
   # ANDROID EXPORT
   ###########################################################################
