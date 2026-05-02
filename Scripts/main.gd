@@ -21,6 +21,44 @@ func _ready():
 		ui.reset_pressed.connect(_on_reset)
 		ui.exit_pressed.connect(_on_exit)
 	
+	# 动态布局：根据 viewport 尺寸调整 Board 和 UI 位置
+	_layout_elements()
+	
+	# 监听大小变化（横竖屏切换）
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	
+	_refresh()
+
+func _layout_elements():
+	"""根据当前 viewport 尺寸动态布局 Board 和 UI"""
+	var vp_size = get_viewport().get_visible_rect().size
+	var vp_w = vp_size.x
+	var vp_h = vp_size.y
+	
+	# UI 高度固定 130px，贴底
+	var ui_h = 130
+	var ui_top = vp_h - ui_h
+	
+	if ui:
+		# 使用 PRESET_TOP_LEFT 避免与 full_rect 冲突
+		ui.anchors_preset = Control.PRESET_TOP_LEFT
+		ui.position = Vector2(0, ui_top)
+		ui.size = Vector2(vp_w, ui_h)
+	
+	# Board 在剩余区域居中，正方形
+	var available_h = ui_top
+	var board_size = min(vp_w - 20, available_h - 20)
+	board_size = max(400, min(board_size, 600))
+	var board_x = (vp_w - board_size) / 2
+	var board_y = (available_h - board_size) / 2
+	
+	if board:
+		board.anchors_preset = Control.PRESET_TOP_LEFT
+		board.position = Vector2(board_x, board_y)
+		board.size = Vector2(board_size, board_size)
+
+func _on_viewport_size_changed():
+	_layout_elements()
 	_refresh()
 
 func _on_cell_clicked(row: int, col: int):
