@@ -10,12 +10,15 @@ var board_pos: Vector2
 
 func _ready():
 	game_state = GameState.new()
-	board.game_state = game_state
-	ui.game_state = game_state
 	
-	board.cell_clicked.connect(_on_cell_clicked)
-	ui.undo_pressed.connect(_on_undo)
-	ui.reset_pressed.connect(_on_reset)
+	if board:
+		board.game_state = game_state
+		board.cell_clicked.connect(_on_cell_clicked)
+	
+	if ui:
+		ui.game_state = game_state
+		ui.undo_pressed.connect(_on_undo)
+		ui.reset_pressed.connect(_on_reset)
 	
 	_refresh()
 

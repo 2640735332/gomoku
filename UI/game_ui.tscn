@@ -9,45 +9,45 @@ offset_bottom = 130.0
 mouse_filter = 1
 script = ExtResource("1_g3k0s")
 
-[node name="TopBar" type="Panel"]
+[node name="TopBar" type="ColorRect" parent="."]
 layout_mode = 0
 offset_right = 600.0
 offset_bottom = 56.0
-color = Color("#0f1011")
+color = Color(0.059, 0.063, 0.067, 1.0)
 
-[node name="TurnIndicator" type="Panel"]
+[node name="TurnIndicator" type="ColorRect" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 16.0
 offset_top = 12.0
 offset_right = 44.0
 offset_bottom = 44.0
-color = Color("#1a1a1a")
+color = Color(0.102, 0.102, 0.102, 1.0)
 
-[node name="CurrentTurnLabel" type="Label"]
+[node name="CurrentTurnLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 52.0
 offset_top = 12.0
 offset_right = 260.0
 offset_bottom = 36.0
-theme_override_colors/font_color = Color("#f7f8f8")
+theme_override_colors/font_color = Color(0.969, 0.973, 0.973, 1.0)
 theme_override_constants/line_spacing = 0
 text = "Black's Turn"
 theme_override_font_sizes/font_size = 16
 
-[node name="MoveCountLabel" type="Label"]
+[node name="MoveCountLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 52.0
 offset_top = 34.0
 offset_right = 260.0
 offset_bottom = 50.0
-theme_override_colors/font_color = Color("#62666d")
+theme_override_colors/font_color = Color(0.384, 0.400, 0.427, 1.0)
 text = "Move 1"
 theme_override_font_sizes/font_size = 11
 
-[node name="UndoContainer" type="Control"]
+[node name="UndoContainer" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 440.0
@@ -55,18 +55,18 @@ offset_top = 6.0
 offset_right = 600.0
 offset_bottom = 56.0
 
-[node name="UndoButton" type="Button"]
+[node name="UndoButton" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 0.0
 offset_top = 6.0
 offset_right = 72.0
 offset_bottom = 50.0
-theme_override_colors/font_color = Color("#d0d6e0")
-theme_override_colors/font_hover_color = Color("#f7f8f8")
-theme_override_colors/font_disabled_color = Color("#62666d")
-theme_override_colors/button_normal = Color("#08090a")
-theme_override_colors/button_hover = Color("#0f1011")
+theme_override_colors/font_color = Color(0.816, 0.839, 0.878, 1.0)
+theme_override_colors/font_hover_color = Color(0.969, 0.973, 0.973, 1.0)
+theme_override_colors/font_disabled_color = Color(0.384, 0.400, 0.427, 1.0)
+theme_override_colors/button_normal = Color(0.031, 0.035, 0.039, 1.0)
+theme_override_colors/button_hover = Color(0.059, 0.063, 0.067, 1.0)
 theme_override_styles/normal = null
 theme_override_styles/hover = null
 theme_override_styles/pressed = null
@@ -74,86 +74,86 @@ theme_override_styles/disabled = null
 theme_override_font_sizes/font_size = 12
 text = "↩ Undo"
 
-[node name="ResetButton" type="Button"]
+[node name="ResetButton" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 80.0
 offset_top = 6.0
 offset_right = 152.0
 offset_bottom = 50.0
-theme_override_colors/font_color = Color("#d0d6e0")
-theme_override_colors/font_hover_color = Color("#f7f8f8")
+theme_override_colors/font_color = Color(0.816, 0.839, 0.878, 1.0)
+theme_override_colors/font_hover_color = Color(0.969, 0.973, 0.973, 1.0)
 theme_override_font_sizes/font_size = 12
 text = "↻ Reset"
 
-[node name="Separator" type="HSeparator"]
+[node name="Separator" type="HSeparator" parent="."]
 layout_mode = 0
 offset_top = 55.0
 offset_right = 600.0
 offset_bottom = 56.0
 
-[node name="StatusBar" type="Panel"]
+[node name="StatusBar" type="ColorRect" parent="."]
 layout_mode = 0
 offset_top = 56.0
 offset_right = 600.0
 offset_bottom = 130.0
-color = Color("#08090a")
+color = Color(0.031, 0.035, 0.039, 1.0)
 
-[node name="StatusLabel" type="Label"]
+[node name="StatusLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 16.0
 offset_top = 8.0
 offset_right = 584.0
 offset_bottom = 30.0
-theme_override_colors/font_color = Color("#8a8f98")
+theme_override_colors/font_color = Color(0.541, 0.561, 0.596, 1.0)
 text = "Place your stone"
 theme_override_font_sizes/font_size = 12
 
-[node name="PlayerInfo" type="Control"]
+[node name="PlayerInfo" type="Control" parent="."]
 layout_mode = 0
 offset_left = 16.0
 offset_top = 34.0
 offset_right = 280.0
 offset_bottom = 66.0
 
-[node name="BlackDot" type="ColorRect"]
+[node name="BlackDot" type="ColorRect" parent="."]
 layout_mode = 0
 offset_left = 0.0
 offset_top = 2.0
 offset_right = 14.0
 offset_bottom = 16.0
-color = Color("#1a1a1a")
+color = Color(0.102, 0.102, 0.102, 1.0)
 
-[node name="BlackLabel" type="Label"]
+[node name="BlackLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 22.0
 offset_top = 2.0
 offset_right = 120.0
 offset_bottom = 18.0
-theme_override_colors/font_color = Color("#62666d")
+theme_override_colors/font_color = Color(0.384, 0.400, 0.427, 1.0)
 text = "Player 1 (Black)"
 theme_override_font_sizes/font_size = 10
 
-[node name="WhiteDot" type="ColorRect"]
+[node name="WhiteDot" type="ColorRect" parent="."]
 layout_mode = 0
 offset_left = 130.0
 offset_top = 2.0
 offset_right = 144.0
 offset_bottom = 16.0
-color = Color("#e8e8e8")
+color = Color(0.91, 0.91, 0.91, 1.0)
 
-[node name="WhiteLabel" type="Label"]
+[node name="WhiteLabel" type="Label" parent="."]
 layout_mode = 0
 offset_left = 152.0
 offset_top = 2.0
 offset_right = 260.0
 offset_bottom = 18.0
-theme_override_colors/font_color = Color("#62666d")
+theme_override_colors/font_color = Color(0.384, 0.400, 0.427, 1.0)
 text = "Player 2 (White)"
 theme_override_font_sizes/font_size = 10
 
-[node name="VictoryPanel" type="Panel"]
+[node name="VictoryPanel" type="ColorRect" parent="."]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
@@ -161,38 +161,38 @@ offset_left = 100.0
 offset_top = 12.0
 offset_right = 500.0
 offset_bottom = 110.0
-color = Color("#0f1011")
+color = Color(0.059, 0.063, 0.067, 1.0)
 
-[node name="VictoryLabel" type="Label"]
+[node name="VictoryLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 30.0
 offset_top = 16.0
 offset_right = 370.0
 offset_bottom = 48.0
-theme_override_colors/font_color = Color("#10b981")
+theme_override_colors/font_color = Color(0.063, 0.725, 0.506, 1.0)
 text = "Black Wins!"
 theme_override_font_sizes/font_size = 24
 
-[node name="VictorySubtitle" type="Label"]
+[node name="VictorySubtitle" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 30.0
 offset_top = 48.0
 offset_right = 370.0
 offset_bottom = 66.0
-theme_override_colors/font_color = Color("#8a8f98")
+theme_override_colors/font_color = Color(0.541, 0.561, 0.596, 1.0)
 text = "5 in a row detected"
 theme_override_font_sizes/font_size = 12
 
-[node name="PlayAgainButton" type="Button"]
+[node name="PlayAgainButton" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 30.0
 offset_top = 72.0
 offset_right = 160.0
 offset_bottom = 94.0
-theme_override_colors/font_color = Color("#f7f8f8")
-theme_override_colors/font_hover_color = Color("#ffffff")
+theme_override_colors/font_color = Color(0.969, 0.973, 0.973, 1.0)
+theme_override_colors/font_hover_color = Color(1.0, 1.0, 1.0, 1.0)
 theme_override_font_sizes/font_size = 13
 text = "Play Again"

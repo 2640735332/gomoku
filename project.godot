@@ -8,6 +8,12 @@
 
 config_version=5
 
+[file_logging]
+
+enable_file_logging=true
+log_path="user://logs/gomoku.log"
+max_log_files = 1
+
 [application]
 
 config/name="Gomoku - Five in a Row"
