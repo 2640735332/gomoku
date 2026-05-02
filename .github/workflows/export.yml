@@ -138,12 +138,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
-      - name: Collect job statuses & run UI/E2E tests on server
+      - name: Collect job statuses & run UI/E2E tests via Godot 4.6
         id: status
-        env:
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SERVER: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           BRANCH="${{ github.ref_name }}"
           COMMIT="${{ github.sha }}"
@@ -155,18 +151,27 @@ jobs:
           TEST="${{ needs.test.result }}"
           ANDROID="${{ needs.export-android.result }}"
 
-          # Run UI/E2E tests on server (has local godot4)
+          # Run UI/E2E tests using the same Godot 4.6 binary downloaded in test-ui
           UI_RESULT="skipped"
-          if [ -n "$SSH_KEY" ] && [ -n "$SERVER" ] && [ "$ANDROID" = "success" ]; then
-            echo "$SSH_KEY" > /tmp/ssh_key
-            chmod 600 /tmp/ssh_key
-            UI_RESULT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
-              -i /tmp/ssh_key "${SERVER_USER}@${SERVER}" \
-              "cd ~/godot-projects/gomoku && \
-               timeout 120 ./godot4 --headless test/run_ui_tests.tscn 2>&1 | tail -5 && \
-               echo '---E2E---' && \
-               timeout 120 ./godot4 --headless test/run_e2e_tests.tscn 2>&1 | tail -5" 2>/dev/null || echo "failed")
-            echo "$UI_RESULT" | grep -q "ALL" && UI_RESULT="success" || UI_RESULT="failed"
+          if [ "$ANDROID" = "success" ]; then
+            if [ ! -f Godot_v4.6-stable_linux.x86_64 ]; then
+              wget -q https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip
+              unzip -q Godot_v4.6-stable_linux.x86_64.zip
+              chmod +x Godot_v4.6-stable_linux.x86_64
+            fi
+            UI_OUT=$(timeout 120 ./Godot_v4.6-stable_linux.x86_64 --headless --display-driver headless --audio-driver Dummy test/run_ui_tests.tscn 2>&1 | tail -3)
+            echo "$UI_OUT"
+            if echo "$UI_OUT" | grep -q "ALL UI TESTS PASSED"; then
+              E2E_OUT=$(timeout 120 ./Godot_v4.6-stable_linux.x86_64 --headless --display-driver headless --audio-driver Dummy test/run_e2e_tests.tscn 2>&1 | tail -3)
+              echo "$E2E_OUT"
+              if echo "$E2E_OUT" | grep -q "ALL E2E TESTS PASSED"; then
+                UI_RESULT="success"
+              else
+                UI_RESULT="failed"
+              fi
+            else
+              UI_RESULT="failed"
+            fi
           fi
 
           echo "test=${TEST}" >> $GITHUB_OUTPUT
