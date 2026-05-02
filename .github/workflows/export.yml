@@ -154,22 +154,33 @@ jobs:
           # Run UI/E2E tests using the same Godot 4.6 binary downloaded in test-ui
           UI_RESULT="skipped"
           if [ "$ANDROID" = "success" ]; then
-            if [ ! -f Godot_v4.6-stable_linux.x86_64 ]; then
-              wget -q https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip
-              unzip -q Godot_v4.6-stable_linux.x86_64.zip
-              chmod +x Godot_v4.6-stable_linux.x86_64
+            G6="./Godot_v4.6-stable_linux.x86_64"
+            if [ ! -f "$G6" ]; then
+              echo "Downloading Godot 4.6..."
+              wget -q "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" -O /tmp/godot46.zip
+              unzip -q /tmp/godot46.zip -d .
+              chmod +x "$G6"
             fi
-            UI_OUT=$(timeout 120 ./Godot_v4.6-stable_linux.x86_64 --headless --display-driver headless --audio-driver Dummy test/run_ui_tests.tscn 2>&1 | tail -3)
-            echo "$UI_OUT"
-            if echo "$UI_OUT" | grep -q "ALL UI TESTS PASSED"; then
-              E2E_OUT=$(timeout 120 ./Godot_v4.6-stable_linux.x86_64 --headless --display-driver headless --audio-driver Dummy test/run_e2e_tests.tscn 2>&1 | tail -3)
-              echo "$E2E_OUT"
-              if echo "$E2E_OUT" | grep -q "ALL E2E TESTS PASSED"; then
-                UI_RESULT="success"
+            if [ -f "$G6" ]; then
+              UI_OUT=$("$G6" --headless --display-driver headless --audio-driver Dummy test/run_ui_tests.tscn 2>&1)
+              echo "=== UI TEST OUTPUT ==="
+              echo "$UI_OUT" | tail -5
+              if echo "$UI_OUT" | grep -q "ALL UI TESTS PASSED"; then
+                E2E_OUT=$("$G6" --headless --display-driver headless --audio-driver Dummy test/run_e2e_tests.tscn 2>&1)
+                echo "=== E2E TEST OUTPUT ==="
+                echo "$E2E_OUT" | tail -5
+                if echo "$E2E_OUT" | grep -q "ALL E2E TESTS PASSED"; then
+                  UI_RESULT="success"
+                else
+                  UI_RESULT="failed"
+                  echo "⚠️ E2E tests did not pass"
+                fi
               else
                 UI_RESULT="failed"
+                echo "⚠️ UI tests did not pass"
               fi
             else
+              echo "⚠️ Godot 4.6 binary not found after download"
               UI_RESULT="failed"
             fi
           fi
