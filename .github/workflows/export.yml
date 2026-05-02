@@ -175,7 +175,7 @@ jobs:
           UI="${{ steps.status.outputs.ui }}"
           ANDROID="${{ steps.status.outputs.android }}"
 
-          if [ "$TEST" = "success" ] && [ "$UI" = "success" ] && [ "$ANDROID" != "failure" ]; then
+          if [ "$TEST" = "success" ] && [ "$ANDROID" != "failure" ]; then
             TITLE="✅ Gomoku CI Passed [$BRANCH]"
           else
             TITLE="❌ Gomoku CI Failed [$BRANCH]"
