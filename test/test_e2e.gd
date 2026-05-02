@@ -14,12 +14,24 @@ var ui = null
 func _ready():
 	print("🧪 Starting End-to-End gameplay tests...")
 	
+	# Safety timeout: if test takes >120 seconds, force quit
+	var t = Timer.new()
+	t.wait_time = 120.0
+	t.one_shot = true
+	t.timeout.connect(_on_test_timeout)
+	add_child(t)
+	t.start()
+	
 	main = Main.instantiate()
 	add_child(main)
 	await get_tree().process_frame
 	
 	board = main.find_child("GameBoard", true, false)
 	ui = main.find_child("GameUI", true, false)
+
+func _on_test_timeout():
+	print("⏰ TEST TIMEOUT after 120 seconds — forcing exit")
+	get_tree().quit(1)
 	
 	if !board or !ui:
 		print("❌ FATAL: Failed to find Board/UI in scene")

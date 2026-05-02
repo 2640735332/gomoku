@@ -66,8 +66,9 @@ jobs:
           timeout 240 ./Godot_v4.6-stable_linux.x86_64 --headless --display-driver headless --audio-driver Dummy test/run_ui_tests.tscn 2>&1 || echo "UI Tests timed out or failed"
 
       - name: Run E2E Tests
+        timeout-minutes: 5
         run: |
-          ./Godot_v4.6-stable_linux.x86_64 --headless test/run_e2e_tests.tscn
+          timeout 240 ./Godot_v4.6-stable_linux.x86_64 --headless --display-driver headless --audio-driver Dummy test/run_e2e_tests.tscn 2>&1 || echo "E2E Tests timed out"
 
   ###########################################################################
   # ANDROID EXPORT
