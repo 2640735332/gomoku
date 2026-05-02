@@ -69,6 +69,8 @@ func _on_cell_clicked(row: int, col: int):
 		else:
 			board.last_move = Vector2i(row, col)
 		_refresh()
+		if not game_state.game_over:
+			sound_manager.play_place_stone()
 
 func _on_undo():
 	game_state.undo_last_move()
@@ -78,6 +80,7 @@ func _on_undo():
 	else:
 		board.last_move = Vector2i(-1, -1)
 	_refresh()
+	sound_manager.play_undo()
 
 func _on_reset():
 	game_state.reset()
@@ -90,7 +93,14 @@ func _on_exit():
 
 func _refresh():
 	board.sync_state()
+	
+	var was_game_over = ui.game_state.game_over if ui and ui.game_state else false
 	ui.update_ui()
+	
+	# Play victory sound when game just ended
+	if ui and ui.game_state and ui.game_state.game_over and not was_game_over:
+		if ui.game_state.winner != GameState.EMPTY:
+			sound_manager.play_victory()
 	
 	# Update move history UI if applicable
 	if has_node("MoveHistory"):

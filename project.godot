@@ -8,6 +8,10 @@
 
 config_version=5
 
+[autoload]
+
+sound_manager="*res://Scripts/sound_manager.gd"
+
 [file_logging]
 
 enable_file_logging=true
