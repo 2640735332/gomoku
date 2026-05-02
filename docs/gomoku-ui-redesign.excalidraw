@@ -1,0 +1,101 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "hermes-agent",
+  "elements": [
+    {"type":"rectangle","id":"darkbg","x":-1000,"y":-1000,"width":5000,"height":5000,"backgroundColor":"#1a1b26","fillStyle":"solid","strokeColor":"transparent","strokeWidth":0},
+
+    {"type":"rectangle","id":"phone","x":800,"y":80,"width":420,"height":820,"backgroundColor":"#1a1b26","fillStyle":"solid","strokeColor":"#2a2b3e","strokeWidth":2,"roundness":{"type":3}},
+
+    {"type":"text","id":"t_title","x":830,"y":100,"width":360,"height":35,"text":"🎯 五子棋 UI 重新设计","fontSize":24,"fontFamily":1,"strokeColor":"#e5e5e5","originalText":"🎯 五子棋 UI 重新设计","autoResize":true},
+    {"type":"text","id":"t_sub","x":830,"y":135,"width":360,"height":20,"text":"Modern Glassmorphism Style","fontSize":14,"fontFamily":1,"strokeColor":"#a0a0a0","originalText":"Modern Glassmorphism Style","autoResize":true},
+
+    {"type":"line","id":"div1","x":830,"y":165,"width":360,"height":0,"strokeColor":"#2a2b3e","strokeWidth":1},
+
+    {"type":"text","id":"t_before","x":830,"y":185,"width":170,"height":25,"text":"Before (当前)","fontSize":18,"fontFamily":1,"strokeColor":"#ef4444","originalText":"Before (当前)","autoResize":true},
+
+    {"type":"rectangle","id":"phone1","x":830,"y":220,"width":170,"height":300,"backgroundColor":"#0f1011","fillStyle":"solid","strokeColor":"#2a2b3e","strokeWidth":1,"roundness":{"type":3}},
+
+    {"type":"rectangle","id":"p1_topbar","x":835,"y":225,"width":160,"height":32,"backgroundColor":"#0d0e10","fillStyle":"solid","strokeColor":"#23252a","strokeWidth":1},
+    {"type":"text","id":"p1_turn","x":840,"y":228,"width":80,"height":12,"text":"● 黑方落子","fontSize":10,"fontFamily":1,"strokeColor":"#969696","originalText":"● 黑方落子","autoResize":true},
+    {"type":"text","id":"p1_undo","x":935,"y":228,"width":30,"height":12,"text":"⟲","fontSize":10,"fontFamily":1,"strokeColor":"#969696","originalText":"⟲","autoResize":true},
+
+    {"type":"line","id":"p1_sep","x":835,"y":257,"width":160,"height":0,"strokeColor":"#23252a","strokeWidth":0.5},
+
+    {"type":"rectangle","id":"p1_board","x":850,"y":270,"width":130,"height":130,"backgroundColor":"#08090a","fillStyle":"solid","strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_grid1","x":860,"y":290,"width":110,"height":0,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_grid2","x":860,"y":310,"width":110,"height":0,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_grid3","x":860,"y":330,"width":110,"height":0,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_grid4","x":860,"y":350,"width":110,"height":0,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_grid5","x":860,"y":370,"width":110,"height":0,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_grid6","x":860,"y":390,"width":110,"height":0,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_gv1","x":875,"y":270,"width":0,"height":130,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_gv2","x":895,"y":270,"width":0,"height":130,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_gv3","x":915,"y":270,"width":0,"height":130,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_gv4","x":935,"y":270,"width":0,"height":130,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_gv5","x":955,"y":270,"width":0,"height":130,"strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"line","id":"p1_gv6","x":975,"y":270,"width":0,"height":130,"strokeColor":"#23252a","strokeWidth":0.5},
+
+    {"type":"rectangle","id":"p1_info","x":835,"y":410,"width":160,"height":50,"backgroundColor":"#0d0e10","fillStyle":"solid","strokeColor":"#23252a","strokeWidth":0.5},
+    {"type":"text","id":"p1_ib","x":840,"y":415,"width":60,"height":10,"text":"● 玩家1 (黑子)","fontSize":8,"fontFamily":1,"strokeColor":"#62666d","originalText":"● 玩家1 (黑子)","autoResize":true},
+    {"type":"text","id":"p1_iw","x":840,"y":430,"width":"60","height":10,"text":"○ 玩家2 (白子)","fontSize":8,"fontFamily":1,"strokeColor":"#62666d","originalText":"○ 玩家2 (白子)","autoResize":true},
+
+    {"type":"text","id":"p1_crit","x":835,"y":470,"width":160,"height":15,"text":"⚠ 左下角信息重叠！","fontSize":10,"fontFamily":1,"strokeColor":"#ef4444","originalText":"⚠ 左下角信息重叠！","autoResize":true},
+
+    {"type":"text","id":"t_arrow","x":1020,"y":340,"width":40,"height":40,"text":"→","fontSize":36,"fontFamily":1,"strokeColor":"#22c55e","originalText":"→","autoResize":true},
+
+    {"type":"text","id":"t_after","x":1070,"y":185,"width":170,"height":25,"text":"After (新设计)","fontSize":18,"fontFamily":1,"strokeColor":"#22c55e","originalText":"After (新设计)","autoResize":true},
+
+    {"type":"rectangle","id":"phone2","x":1070,"y":220,"width":170,"height":350,"backgroundColor":"#1a1b26","fillStyle":"solid","strokeColor":"#2a2b3e","strokeWidth":1,"roundness":{"type":3}},
+
+    {"type":"rectangle","id":"p2_statusbar","x":1078,"y":226,"width":155,"height":28,"backgroundColor":"#282a40","fillStyle":"solid","strokeColor":"#4a4e7a","strokeWidth":0.5,"roundness":{"type":3}},
+    {"type":"text","id":"p2_status","x":1085,"y":230,"width":100,"height":13,"text":"🤍 白方回合 · 第 5 手","fontSize":10,"fontFamily":1,"strokeColor":"#a0a0a0","originalText":"🤍 白方回合 · 第 5 手","autoResize":true},
+
+    {"type":"rectangle","id":"p2_board","x":1085,"y":265,"width":120,"height":120,"backgroundColor":"#13142a","fillStyle":"solid","strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_l1","x":1095,"y":280,"width":100,"height":0,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_l2","x":1095,"y":300,"width":100,"height":0,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_l3","x":1095,"y":320,"width":100,"height":0,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_l4","x":1095,"y":340,"width":100,"height":0,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_l5","x":1095,"y":360,"width":100,"height":0,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_v1","x":1110,"y":265,"width":0,"height":120,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_v2","x":1130,"y":265,"width":0,"height":120,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_v3","x":1150,"y":265,"width":0,"height":120,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_v4","x":1170,"y":265,"width":0,"height":120,"strokeColor":"#363854","strokeWidth":0.5},
+    {"type":"line","id":"p2_v5","x":1190,"y":265,"width":0,"height":120,"strokeColor":"#363854","strokeWidth":0.5},
+
+    {"type":"ellipse","id":"p2_s1","x":1105,"y":295,"width":8,"height":8,"backgroundColor":"#1a1a1a","fillStyle":"solid","strokeColor":"transparent","strokeWidth":0},
+    {"type":"ellipse","id":"p2_s2","x":1125,"y":315,"width":8,"height":8,"backgroundColor":"#e8e8e8","fillStyle":"solid","strokeColor":"#aaa","strokeWidth":0.3},
+    {"type":"ellipse","id":"p2_s3","x":1145,"y":295,"width":8,"height":8,"backgroundColor":"#1a1a1a","fillStyle":"solid","strokeColor":"transparent","strokeWidth":0},
+
+    {"type":"rectangle","id":"p2_btns","x":1078,"y":395,"width":155,"height":28,"backgroundColor":"#282a40","fillStyle":"solid","strokeColor":"#4a4e7a","strokeWidth":0.5,"roundness":{"type":3}},
+    {"type":"text","id":"p2_undo","x":1085,"y":400,"width":35,"height":12,"text":"↩ 悔棋","fontSize":9,"fontFamily":1,"strokeColor":"#a0b4ff","originalText":"↩ 悔棋","autoResize":true},
+    {"type":"text","id":"p2_reset","x":1130,"y":400,"width":35,"height":12,"text":"↻ 重置","fontSize":9,"fontFamily":1,"strokeColor":"#a0a0a0","originalText":"↻ 重置","autoResize":true},
+    {"type":"text","id":"p2_exit","x":1175,"y":400,"width":30,"height":12,"text":"✕","fontSize":9,"fontFamily":1,"strokeColor":"#ff6b6b","originalText":"✕","autoResize":true},
+
+    {"type":"rectangle","id":"p2_score","x":1078,"y":432,"width":155,"height":50,"backgroundColor":"rgba(40,42,64,0.5)","fillStyle":"solid","strokeColor":"#4a4e7a","strokeWidth":0.5,"roundness":{"type":3}},
+    {"type":"text","id":"p2_sco","x":1085,"y":436,"width":60,"height":12,"text":"● 黑方  8 子","fontSize":9,"fontFamily":1,"strokeColor":"#c0c0c0","originalText":"● 黑方  8 子","autoResize":true},
+    {"type":"text","id":"p2_scw","x":1085,"y":450,"width":60,"height":12,"text":"○ 白方  7 子","fontSize":9,"fontFamily":1,"strokeColor":"#c0c0c0","originalText":"○ 白方  7 子","autoResize":true},
+
+    {"type":"text","id":"p2_status2","x":1078,"y":492,"width":155,"height":12,"text":"状态: 游戏中 | 步数: 15","fontSize":8,"fontFamily":1,"strokeColor":"#6b6f99","originalText":"状态: 游戏中 | 步数: 15","autoResize":true},
+
+    {"type":"text","id":"p2_tag","x":1078,"y":510,"width":155,"height":12,"text":"#glassmorphism #dark-theme","fontSize":8,"fontFamily":1,"strokeColor":"#4a4e7a","originalText":"#glassmorphism #dark-theme","autoResize":true},
+
+    {"type":"text","id":"t_keys","x":830,"y":610,"width":360,"height":25,"text":"✨ 设计亮点","fontSize":20,"fontFamily":1,"strokeColor":"#22c55e","originalText":"✨ 设计亮点","autoResize":true},
+
+    {"type":"rectangle","id":"kp1","x":830,"y":645,"width":360,"height":50,"backgroundColor":"#1e3a5f","fillStyle":"solid","strokeColor":"#4a9eed","strokeWidth":0.5,"roundness":{"type":3},"boundElements":[{"id":"tkp1","type":"text"}]},
+    {"type":"text","id":"tkp1","x":835,"y":650,"width":350,"height":40,"text":"🎯 毛玻璃顶栏 (Blur Bar)\n半透明背景 + 回合信息 + 按钮，现代感","fontSize":10,"fontFamily":1,"strokeColor":"#e5e5e5","textAlign":"left","verticalAlign":"middle","containerId":"kp1","originalText":"🎯 毛玻璃顶栏 (Blur Bar)\n半透明背景 + 回合信息 + 按钮，现代感","autoResize":true},
+
+    {"type":"rectangle","id":"kp2","x":830,"y":705,"width":360,"height":50,"backgroundColor":"#1a4d4d","fillStyle":"solid","strokeColor":"#22c55e","strokeWidth":0.5,"roundness":{"type":3},"boundElements":[{"id":"tkp2","type":"text"}]},
+    {"type":"text","id":"tkp2","x":835,"y":710,"width":350,"height":40,"text":"📊 子数统计面板 (Stone Count)\n替代重叠的 PlayerInfo，清晰展示双方子数","fontSize":10,"fontFamily":1,"strokeColor":"#e5e5e5","textAlign":"left","verticalAlign":"middle","containerId":"kp2","originalText":"📊 子数统计面板 (Stone Count)\n替代重叠的 PlayerInfo，清晰展示双方子数","autoResize":true},
+
+    {"type":"rectangle","id":"kp3","x":830,"y":765,"width":360,"height":50,"backgroundColor":"#2d1b69","fillStyle":"solid","strokeColor":"#8b5cf6","strokeWidth":0.5,"roundness":{"type":3},"boundElements":[{"id":"tkp3","type":"text"}]},
+    {"type":"text","id":"tkp3","x":835,"y":770,"width":350,"height":40,"text":"🎨 棋盘深色渐变 + 紫罗兰高亮\n棋盘改用深色渐变背景，星位用紫色，光标用亮紫","fontSize":10,"fontFamily":1,"strokeColor":"#e5e5e5","textAlign":"left","verticalAlign":"middle","containerId":"kp3","originalText":"🎨 棋盘深色渐变 + 紫罗兰高亮\n棋盘改用深色渐变背景，星位用紫色，光标用亮紫","autoResize":true},
+
+    {"type":"rectangle","id":"kp4","x":830,"y":825,"width":360,"height":35,"backgroundColor":"#5c1a1a","fillStyle":"solid","strokeColor":"#ef4444","strokeWidth":0.5,"roundness":{"type":3},"boundElements":[{"id":"tkp4","type":"text"}]},
+    {"type":"text","id":"tkp4","x":835,"y":830,"width":350,"height":25,"text":"🔥 Victory Panel 炫彩动画\n胜利面板使用渐变色 + 缩放动画，更有成就感","fontSize":10,"fontFamily":1,"strokeColor":"#e5e5e5","textAlign":"left","verticalAlign":"middle","containerId":"kp4","originalText":"🔥 Victory Panel 炫彩动画\n胜利面板使用渐变色 + 缩放动画，更有成就感","autoResize":true}
+
+  ],
+  "appState": {
+    "viewBackgroundColor": "#1a1b26"
+  }
+}

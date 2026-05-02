@@ -105,12 +105,12 @@ func _ready():
 		failed += 1
 
 	# ── Test 11: UI labels are in Chinese ──
-	var turn_label = ui.find_child("CurrentTurnLabel", true, false)
-	if turn_label and "落子" in turn_label.text:
+	var status_text = ui.find_child("StatusText", true, false)
+	if status_text and "落子" in status_text.text:
 		print("✅ Test 11: UI shows Chinese text")
 		passed += 1
 	else:
-		print("❌ Test 11: UI not showing Chinese, got: ", turn_label.text if turn_label else "null")
+		print("❌ Test 11: UI not showing Chinese, got: ", status_text.text if status_text else "null")
 		failed += 1
 
 	# ── Test 12: Simulate game over → victory panel shows ──

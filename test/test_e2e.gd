@@ -99,7 +99,7 @@ func _ready():
 	# ────────────────────────────────────────
 	# Test 5: Current turn indicator updates
 	# ────────────────────────────────────────
-	var turn_label = ui.find_child("CurrentTurnLabel", true, false)
+	var turn_label = ui.find_child("StatusText", true, false)
 	if turn_label and "黑方" in turn_label.text:
 		print("✅ Test 5: Turn indicator shows 黑方 (back to black after white placed)")
 		passed += 1
