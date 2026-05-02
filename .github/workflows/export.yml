@@ -18,7 +18,7 @@ jobs:
   # TESTS
   ###########################################################################
   test:
-    name: Tests
+    name: Logic Tests (4.3)
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.3
@@ -36,24 +36,41 @@ jobs:
           cp -rv /root/.config/godot/* $HOME/.config/godot/ 2>/dev/null || true
           cp -rv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/* $HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/ 2>/dev/null || true
 
-      - name: Run Tests
+      - name: Run Logic Tests
         run: |
           godot --headless test/run_tests.tscn
 
+  ###########################################################################
+  # UI + E2E TESTS (Godot 4.6 — matches local dev version)
+  ###########################################################################
+  test-ui:
+    name: UI + E2E Tests (4.6)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Godot 4.6
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6-stable_linux.x86_64.zip
+          chmod +x Godot_v4.6-stable_linux.x86_64
+
       - name: Run UI Tests
         run: |
-          godot --headless test/run_ui_tests.tscn
+          ./Godot_v4.6-stable_linux.x86_64 --headless test/run_ui_tests.tscn
 
       - name: Run E2E Tests
         run: |
-          godot --headless test/run_e2e_tests.tscn
+          ./Godot_v4.6-stable_linux.x86_64 --headless test/run_e2e_tests.tscn
 
   ###########################################################################
   # ANDROID EXPORT
   ###########################################################################
   export-android:
     name: Android Export
-    needs: [test]
+    needs: [test, test-ui]
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.3
@@ -109,7 +126,7 @@ jobs:
   ###########################################################################
   notify:
     name: Notification
-    needs: [test, export-android]
+    needs: [test, test-ui, export-android]
     if: always()
     runs-on: ubuntu-24.04
     steps:
@@ -124,9 +141,11 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           TEST="${{ needs.test.result }}"
+          UI="${{ needs.test-ui.result }}"
           ANDROID="${{ needs.export-android.result }}"
 
           echo "test=${TEST}" >> $GITHUB_OUTPUT
+          echo "ui=${UI}" >> $GITHUB_OUTPUT
           echo "android=${ANDROID}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
           echo "commit=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
@@ -148,9 +167,10 @@ jobs:
           ACTOR="${{ steps.status.outputs.actor }}"
           URL="${{ steps.status.outputs.url }}"
           TEST="${{ steps.status.outputs.test }}"
+          UI="${{ steps.status.outputs.ui }}"
           ANDROID="${{ steps.status.outputs.android }}"
 
-          if [ "$TEST" = "success" ] && [ "$ANDROID" != "failure" ]; then
+          if [ "$TEST" = "success" ] && [ "$UI" = "success" ] && [ "$ANDROID" != "failure" ]; then
             TITLE="✅ Gomoku CI Passed [$BRANCH]"
           else
             TITLE="❌ Gomoku CI Failed [$BRANCH]"
@@ -161,7 +181,7 @@ jobs:
             echo ""
             echo "Branch: $BRANCH  |  Commit: $COMMIT  |  Author: $ACTOR"
             echo "──────────────────────────────"
-            echo "🔬 Test: $TEST  |  📱 Android: ${ANDROID:-skipped}"
+            echo "🔬 Logic: $TEST  |  🖥️ UI: $UI  |  📱 Android: ${ANDROID:-skipped}"
             echo "──────────────────────────────"
             echo "🔗 ${URL}"
           } > /tmp/ci_notify.txt
